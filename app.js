@@ -8,6 +8,10 @@
   const formMessage = document.querySelector('#form-message');
   const listMessage = document.querySelector('#list-message');
   const list = document.querySelector('#request-list');
+  const filterButtons = document.querySelectorAll('#urgency-filters button');
+  const filterMessage = document.querySelector('#filter-message');
+  let selectedUrgency = '全部';
+  let hasLoaded = false;
   let client;
   let submitting = false;
   let loading = false;
@@ -25,11 +29,33 @@
     return node;
   }
 
+  // 只篩選已讀取的最近 20 筆，不發出額外資料庫請求。
+  function applyUrgencyFilter() {
+    let visibleCount = 0;
+    for (const card of list.children) {
+      card.hidden = selectedUrgency !== '全部' && card.dataset.urgency !== selectedUrgency;
+      if (!card.hidden) visibleCount += 1;
+    }
+    for (const button of filterButtons) {
+      button.setAttribute('aria-pressed', String(button.dataset.urgency === selectedUrgency));
+    }
+    message(filterMessage, hasLoaded && list.childElementCount > 0 && visibleCount === 0
+      ? `最近 20 筆中沒有緊急程度為「${selectedUrgency}」的報修。` : '');
+  }
+
+  for (const button of filterButtons) {
+    button.addEventListener('click', () => {
+      selectedUrgency = button.dataset.urgency;
+      applyUrgencyFilter();
+    });
+  }
+
   function renderRequests(requests) {
     const fragment = document.createDocumentFragment();
     for (const request of requests) {
       const card = document.createElement('article');
       card.className = 'request-card';
+      card.dataset.urgency = request.urgency;
       const heading = element('div', '', 'card-heading');
       heading.append(element('h3', `${request.location} · ${request.category}`));
       const badges = element('div', '', 'badges');
@@ -48,6 +74,8 @@
       fragment.append(card);
     }
     list.replaceChildren(fragment);
+    hasLoaded = true;
+    applyUrgencyFilter();
   }
 
   async function loadRequests() {
