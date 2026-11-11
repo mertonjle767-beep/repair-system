@@ -80,6 +80,12 @@
 
   async function loadRequests() {
     if (loading) return;
+    if (!navigator.onLine) {
+      refreshButton.disabled = false;
+      message(listMessage, `目前離線，無法讀取最新清單。${list.childElementCount ? ' 下方仍是本頁先前載入的資料。' : '請連線後按重新整理。'}`, 'error');
+      list.setAttribute('aria-busy', 'false');
+      return;
+    }
     loading = true;
     refreshButton.disabled = true;
     list.setAttribute('aria-busy', 'true');
@@ -103,6 +109,10 @@
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (submitting || !client || !form.reportValidity()) return;
+    if (!navigator.onLine) {
+      message(formMessage, '目前離線，尚未送出報修。內容僅留在此頁，請勿關閉或重新載入；連線後再手動送出。', 'error');
+      return;
+    }
     const input = new FormData(form);
     // 白名單只送出可新增的五個欄位；不送 status、id 或 created_at。
     const payload = Object.fromEntries(['reporter_name', 'location', 'category', 'description', 'urgency']
