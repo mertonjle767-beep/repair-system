@@ -165,6 +165,9 @@ def fetch_taiex_day(day: dt.date, fetch=fetch_json) -> list[dict]:
 def fetch_stock_month(code: str, name: str, month: dt.date, fetch=fetch_json) -> list[dict]:
     """STOCK_DAY：個股（含 ETF）當月每日成交資訊。"""
     payload = fetch("afterTrading/STOCK_DAY", date=month.strftime("%Y%m01"), stockNo=code)
+    if not name:  # watchlist 沒填名稱時，從標題「115年11月 2330 台積電 各日成交資訊」取得
+        m = re.search(rf"\b{re.escape(code)}\s+(.+?)\s+各日成交資訊", str(payload.get("title", "")))
+        name = m[1].strip() if m else ""
     rows = []
     for fields, data in tables(payload):
         i_date = column(fields, "日期")
@@ -326,7 +329,7 @@ def update(today: dt.date, month_count: int, fetch=fetch_json, data_dir: Path = 
            watchlist: Path = WATCHLIST) -> dict:
     tracked = json.loads(watchlist.read_text(encoding="utf-8"))["tracked"]
     names = {t["code"]: t.get("name", "") for t in tracked}
-    errors, calls = [], [0]
+    errors, warnings, calls = [], [], [0]
 
     def attempt(label, func, *args):
         calls[0] += 1
@@ -345,6 +348,16 @@ def update(today: dt.date, month_count: int, fetch=fetch_json, data_dir: Path = 
 
     # 查詢當天的加權指數另外抓，避免 FMTQIK 尚未更新時停在前一個交易日
     new_taiex += attempt(f"加權指數 {today}", fetch_taiex_day, today)
+
+    # 補上 watchlist 未填的名稱，並標出查不到收盤資料的代號
+    existing_codes = {r["代號"] for r in read_csv(data_dir / "prices.csv")}
+    for t in tracked:
+        found = [r for r in new_prices if r["代號"] == t["code"]]
+        if found and not t.get("name"):
+            t["name"] = names[t["code"]] = found[-1]["名稱"]
+        if not found and t["code"] not in existing_codes:
+            warnings.append(f"{t['code']}：查無收盤資料（代號可能有誤，或不是證交所上市證券）")
+            print(f"[警告] {t['code']} 查無收盤資料", file=sys.stderr)
 
     new_divs = []
     start = today - dt.timedelta(days=400)  # 近 12 個月配息需要約一年資料，分段查詢
@@ -365,6 +378,7 @@ def update(today: dt.date, month_count: int, fetch=fetch_json, data_dir: Path = 
     write_csv(data_dir / "dividends.csv", DIVIDEND_FIELDS, dividends)
     summary = build_summary(taiex, prices, dividends, tracked, today)
     summary["錯誤"] = errors
+    summary["警告"] = warnings
     summary["請求數"] = calls[0]
     (data_dir / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
                                            encoding="utf-8")

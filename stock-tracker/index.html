@@ -38,11 +38,12 @@ tr:last-child td{border-bottom:0}
 
   <div class="card index" id="taiex" aria-live="polite"></div>
 
-  <h2>追蹤 ETF</h2>
+  <h2>追蹤標的</h2>
   <div class="wrap"><table>
     <thead><tr><th>代號／名稱</th><th>收盤日</th><th>收盤價</th><th>漲跌</th><th>最近除息日</th><th>每股配息</th><th>下次除息日</th><th>預告配息</th><th>近12月配息</th><th>殖利率</th></tr></thead>
     <tbody id="etfs"></tbody>
   </table></div>
+  <p class="note error" id="warn" hidden></p>
   <p class="note">收盤價以查詢日為準；日期旁標 <span class="stale">*</span> 表示查詢日休市或尚未收盤，顯示的是前一個交易日。殖利率＝近 12 個月已除息配息合計 ÷ 收盤價。配息發放日請以各投信公告為準，交易所公開資料只提供除息日。</p>
 
   <h2>配息紀錄</h2>
@@ -101,6 +102,10 @@ function render(s) {
       num(i['近12月配息'], 3), i['殖利率'] == null ? '—' : `${num(i['殖利率'])}%`,
     ]);
   }).join('');
+
+  const warns = s['警告'] || [];
+  $('warn').hidden = !warns.length;
+  $('warn').textContent = warns.join('；');
 
   const divs = s['配息紀錄'];
   const names = Object.fromEntries(items.map(i => [i['代號'], i['名稱']]));

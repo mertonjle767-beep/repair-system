@@ -117,6 +117,22 @@ class UpdateTests(unittest.TestCase):
         self.assertEqual(summary["加權指數"]["日期"], "2026-11-12")
         self.assertEqual(summary["追蹤標的"][0]["日期"], "2026-11-12")
 
+    def test_name_from_title_and_missing_code(self):
+        self.watch.write_text(json.dumps({"tracked": [{"code": "0050", "name": ""}, {"code": "9999X", "name": ""}]}),
+                              encoding="utf-8")
+        titled = dict(FIXTURES["afterTrading/STOCK_DAY"], title="115年11月 0050 元大台灣50         各日成交資訊")
+
+        def fetch(path, **params):
+            if path == "afterTrading/STOCK_DAY":
+                return titled if params["stockNo"] == "0050" else {"stat": "很抱歉，沒有符合條件的資料!"}
+            return fake_fetch(path, **params)
+        summary = ft.update(dt.date(2026, 11, 16), 1, fetch=fetch, data_dir=self.dir / "data", watchlist=self.watch)
+        self.assertEqual(summary["追蹤標的"][0]["名稱"], "元大台灣50")
+        self.assertEqual(summary["配息紀錄"][0]["名稱"], "元大台灣50")
+        self.assertEqual(summary["錯誤"], [])
+        self.assertEqual(len(summary["警告"]), 1)
+        self.assertIn("9999X", summary["警告"][0])
+
     def test_update_is_idempotent(self):
         self.run_update()
         first = (self.dir / "data" / "prices.csv").read_text(encoding="utf-8-sig")
