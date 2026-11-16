@@ -190,6 +190,7 @@ details.legend i { width: 22px; height: 5px; border-radius: 3px; display: inline
 .near-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
 .near-list b { font-weight: 500; }
 .near-list span { color: var(--muted); font-size: .88rem; }
+.access { margin: 0; padding-left: 1.3em; display: grid; gap: 4px; font-size: .92rem; }
 .tip { margin-top: 16px; padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 6px 6px 0; font-size: .9rem; }
 
 .btn {
@@ -359,6 +360,7 @@ const ST = {
   '電訊中心':[35.6175,139.7790],'青海':[35.6185,139.7835],'東京國際展示場':[35.6301,139.7932]
 };
 
+// far：位於地圖範圍外的郊外景點，只列在清單，不畫在地圖上
 // num(i)：第 i 站的站號；dir[0]：往索引遞減方向，dir[1]：往索引遞增方向
 const LINES = [
   { id:'Z', name:'東京 Metro 半藏門線', color:'#8F76D6', code:'Z', num:i=>i+1, dir:['往澀谷方面','往押上方面'],
@@ -381,7 +383,7 @@ const LINES = [
     st:['新橋','汐留','竹芝','日之出','芝浦埠頭','台場海濱公園','台場','東京國際郵輪碼頭','電訊中心','青海','東京國際展示場'] }
 ];
 
-const CATS = ['寺社','地標','公園','購物','美食','藝文'];
+const CATS = ['寺社','地標','公園','購物','美食','藝文','哆啦A夢'];
 const SPOTS = [
   { n:'淺草寺・雷門', c:'寺社', p:[35.7148,139.7967], st:['淺草','田原町'],
     d:'東京最古老的寺院，相傳創建於西元 628 年。從掛著大紅燈籠的雷門走進仲見世通，兩側是販售人形燒、仙貝與紀念品的老店，盡頭是本堂與五重塔。',
@@ -462,7 +464,16 @@ const SPOTS = [
   { n:'神保町古書街', c:'藝文', p:[35.6950,139.7592], st:['神保町','御茶之水','九段下'],
     d:'聚集上百間二手書店，從古籍、浮世繪到絕版漫畫都找得到。這一帶也是咖哩名店的激戰區，老派喫茶店很多。',
     near:[['咖哩名店','歐風咖哩與印度咖哩名店林立'],['老派喫茶店','昭和時期營業至今的咖啡館'],['東京復活大聖堂','御茶之水的拜占庭式教堂']],
-    tip:'不少書店週日與國定假日休息，平日前往選擇最多。' }
+    tip:'不少書店週日與國定假日休息，平日前往選擇最多。' },
+  { n:'藤子・F・不二雄博物館', c:'哆啦A夢', p:[35.6083,139.5655], far:true, area:'神奈川縣川崎市', via:'新宿', st:['登戶（小田急線）','宿河原（JR 南武線）'],
+    d:'展示《哆啦A夢》作者藤子・F・不二雄的原畫與創作歷程，館方收藏大量原畫並定期更換展出。館內有可愛的主題咖啡廳、漫畫閱覽區與小劇場，屋頂廣場能和任意門、恐龍嗶之助等經典場景合照。',
+    access:['從本圖的新宿站搭小田急線（快速急行約 20 分鐘）到登戶站','在登戶站轉乘川崎市巴士的博物館直達巴士，約 9 分鐘','或搭 JR 南武線到宿河原站，步行約 16 分鐘'],
+    near:[['登戶站哆啦A夢裝飾','小田急登戶站的月台與站內有哆啦A夢主題裝飾，搭車途中就能拍照'],['生田綠地','博物館旁的大型綠地，有日本民家園與岡本太郎美術館'],['博物館屋頂廣場','任意門、哆啦A夢與恐龍等作品場景的拍照區']],
+    tip:'採預約制，需事先購買指定日期與入館時段的門票，現場不售票；每週二休館。' },
+  { n:'哆啦A夢未來百貨公司', c:'哆啦A夢', p:[35.6218,139.7752], st:['台場','東京國際郵輪碼頭'],
+    d:'位於台場 DiverCity Tokyo Plaza 2 樓的哆啦A夢官方旗艦店，販售大量周邊與店舖限定商品。店內還有以「秘密道具」為主題的互動區，可以體驗製作專屬的原創小物。',
+    near:[['DiverCity Tokyo Plaza','購物中心，門前有實物大的機器人立像'],['台場海濱公園','人工沙灘與彩虹大橋景色'],['臨海線東京電訊站','距離最近的車站，步行約 3 分鐘（本圖未收錄臨海線）']],
+    tip:'假日人潮多，平日上午前往比較好逛；營業時間依 DiverCity 公告為準。' }
 ];
 
 /* ====================== 投影與工具 ====================== */
@@ -527,6 +538,7 @@ Object.keys(ST).forEach(name => {
   lblEls.push(t);
 });
 SPOTS.forEach((s, i) => {
+  if (s.far) { spotEls.push(null); return; }
   const [x, y] = P(s.p);
   const g = el('g', { class:'spot', 'data-x':x, 'data-y':y, tabindex:0, role:'button', 'aria-label':s.n }, gSpot);
   el('circle', { r:11 }, g);
@@ -537,7 +549,7 @@ SPOTS.forEach((s, i) => {
 });
 
 /* ====================== 縮放與平移 ====================== */
-const all = [...Object.values(ST), ...SPOTS.map(s => s.p)].map(P);
+const all = [...Object.values(ST), ...SPOTS.filter(s => !s.far).map(s => s.p)].map(P);
 const minX = Math.min(...all.map(p => p[0])) - 30, maxX = Math.max(...all.map(p => p[0])) + 30;
 const minY = Math.min(...all.map(p => p[1])) - 30, maxY = Math.max(...all.map(p => p[1])) + 30;
 let vb = { x:0, y:0, w:1, h:1 }, baseW = 1;
@@ -551,7 +563,7 @@ function apply() {
   svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
   const r = svg.getBoundingClientRect();
   const s = vb.w / (r.width || 1), zoom = baseW / vb.w;
-  for (const g of [...Object.values(stnEls), ...spotEls])
+  for (const g of [...Object.values(stnEls), ...spotEls.filter(Boolean)])
     g.setAttribute('transform', `translate(${g.dataset.x},${g.dataset.y}) scale(${s})`);
   const showMinor = zoom >= 1.9;
   for (const t of lblEls) {
@@ -658,10 +670,10 @@ function renderList() {
     (cat === '全部' || s.c === cat) &&
     (!q || [s.n, s.d, s.c, s.tip, ...s.st, ...s.near.flat()].join(' ').includes(q)));
   const ids = new Set(hits.map(h => h[1]));
-  spotEls.forEach((g, i) => g.classList.toggle('dim', !ids.has(i)));
+  spotEls.forEach((g, i) => g?.classList.toggle('dim', !ids.has(i)));
   $('#spotlist').innerHTML = hits.length ? hits.map(([s, i]) => `<li><button type="button" data-i="${i}">
       <span class="num">${i + 1}</span>
-      <span><b>${esc(s.n)}</b><small>${esc(s.c)}・${s.st.map(esc).join('／')}站</small></span></button></li>`).join('')
+      <span><b>${esc(s.n)}</b><small>${esc(s.c)}・${s.far ? `郊外・${esc(s.area)}` : s.st.map(esc).join('／') + '站'}</small></span></button></li>`).join('')
     : '<li class="empty">找不到符合的景點，試試其他關鍵字或分類。</li>';
 }
 $('#spotlist').addEventListener('click', e => { const b = e.target.closest('button[data-i]'); if (b) openSpot(+b.dataset.i); });
@@ -669,7 +681,7 @@ $('#spotlist').addEventListener('click', e => { const b = e.target.closest('butt
 let selSpot = -1;
 function openSpot(i) {
   const s = SPOTS[i];
-  spotEls.forEach((g, j) => g.classList.toggle('sel', j === i));
+  spotEls.forEach((g, j) => g?.classList.toggle('sel', j === i));
   selSpot = i;
   showTab('spots');
   $('#spotsList').hidden = true;
@@ -678,19 +690,21 @@ function openSpot(i) {
     <div class="cat">${esc(s.c)}</div>
     <h2>${i + 1}. ${esc(s.n)}</h2>
     <p>${esc(s.d)}</p>
-    <h4>最近車站</h4>
+    ${s.far ? `<h4>交通方式（地圖範圍外，位於${esc(s.area)}）</h4>
+    <ol class="access">${s.access.map(a => `<li>${esc(a)}</li>`).join('')}</ol>
+    <div class="ractions"><button type="button" class="btn sm ghost" data-to="${esc(s.via)}">規劃到${esc(s.via)}（轉乘起點）</button></div>` : `<h4>最近車站</h4>
     <ul class="stlist">${s.st.map(n => `<li><span class="nm">${esc(n)}</span>${badges(n)}
-      <button type="button" class="btn sm ghost" data-to="${esc(n)}">規劃到這裡</button></li>`).join('')}</ul>
+      <button type="button" class="btn sm ghost" data-to="${esc(n)}">規劃到這裡</button></li>`).join('')}</ul>`}
     <h4>週邊推薦</h4>
     <ul class="near-list">${s.near.map(([a, b]) => `<li><b>${esc(a)}</b><br><span>${esc(b)}</span></li>`).join('')}</ul>
     <div class="tip"><strong>小提示：</strong>${esc(s.tip)}</div>`;
   $('#pane-spots').scrollTop = 0;
-  focusOn(s.p, 2.6);
+  if (!s.far) focusOn(s.p, 2.6);
 }
 $('#spotDetail').addEventListener('click', e => {
   if (e.target.id === 'back') {
     $('#spotDetail').hidden = true; $('#spotsList').hidden = false;
-    spotEls.forEach(g => g.classList.remove('sel')); selSpot = -1; return;
+    spotEls.forEach(g => g?.classList.remove('sel')); selSpot = -1; return;
   }
   const to = e.target.dataset.to;
   if (to) { $('#to').value = to; showTab('route'); if ($('#from').value) runRoute(); else $('#from').focus(); }
