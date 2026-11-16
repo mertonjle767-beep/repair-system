@@ -1,0 +1,812 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>東京散策地圖</title>
+<meta name="description" content="東京地鐵路線查詢、熱門景點與週邊介紹的互動地圖。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: 地圖佔主畫面，右側（手機為下方）分頁面板：景點／路線／須知 */
+:root {
+  --bg: #e9edf1;
+  --land: #f8f9fb;
+  --sea: #c9dce8;
+  --park: #d3e5cc;
+  --river: #b4cfdf;
+  --ink: #18212c;
+  --muted: #5b6878;
+  --line: #d6dce3;
+  --surface: #ffffff;
+  --accent: #24408f;
+  --accent-soft: #e2e8f6;
+  --pin: #24408f;
+  --pin-fg: #ffffff;
+  --font-display: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+  --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10151b; --land: #19202a; --sea: #0e2231; --park: #1d2e23; --river: #173246;
+    --ink: #e5e9ef; --muted: #95a2b2; --line: #2b3542; --surface: #161c24;
+    --accent: #8fa7ff; --accent-soft: #232d48; --pin: #8fa7ff; --pin-fg: #10151b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10151b; --land: #19202a; --sea: #0e2231; --park: #1d2e23; --river: #173246;
+  --ink: #e5e9ef; --muted: #95a2b2; --line: #2b3542; --surface: #161c24;
+  --accent: #8fa7ff; --accent-soft: #232d48; --pin: #8fa7ff; --pin-fg: #10151b;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.6 var(--font-body);
+  display: flex; flex-direction: column;
+}
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+header.top {
+  display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  padding-block: 14px 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+header.top h1 {
+  margin: 0; font: 900 1.6rem/1.2 var(--font-display); letter-spacing: .04em;
+}
+header.top p { margin: 0; color: var(--muted); font-size: .9rem; }
+header.top a.back { margin-left: auto; color: var(--muted); font-size: .85rem; }
+
+.app {
+  flex: 1; min-height: 0;
+  display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 12px;
+  padding-block: 0 16px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* ---------- 地圖 ---------- */
+.mapwrap {
+  position: relative; min-width: 0; min-height: 0;
+  border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+  background: var(--land);
+}
+#map { width: 100%; height: 100%; display: block; touch-action: none; user-select: none; cursor: grab; }
+#map.dragging { cursor: grabbing; }
+.sea { fill: var(--sea); }
+.landpoly { fill: var(--land); }
+.park { fill: var(--park); }
+.river { fill: none; stroke: var(--river); stroke-linecap: round; stroke-linejoin: round; }
+.casing { fill: none; stroke: var(--land); stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.ln { fill: none; stroke-width: 4.5; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; transition: opacity .2s; }
+.geo-label { fill: var(--muted); font-family: var(--font-display); font-weight: 700; opacity: .55; letter-spacing: .3em; pointer-events: none; }
+.stn { cursor: pointer; }
+.stn circle { fill: var(--surface); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.stn.x circle { stroke: var(--ink); }
+.stn:hover circle, .stn.sel circle { fill: var(--accent); stroke: var(--accent); }
+.lbl {
+  fill: var(--ink); paint-order: stroke; stroke: var(--land); stroke-linejoin: round;
+  font-family: var(--font-body); font-weight: 500; pointer-events: none;
+}
+.lbl.minor { fill: var(--muted); font-weight: 400; }
+.spot { cursor: pointer; }
+.spot circle { fill: var(--pin); stroke: var(--land); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.spot text { fill: var(--pin-fg); font: 600 11px var(--font-mono); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.spot.sel circle { fill: #e0532f; }
+.spot.dim { opacity: .25; }
+svg.routing .ln, svg.routing .stn { opacity: .22; }
+svg.routing .stn.on { opacity: 1; }
+.route-ln { fill: none; stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.route-casing { fill: none; stroke: var(--ink); stroke-width: 12; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; opacity: .85; }
+
+.zoom {
+  position: absolute; right: 10px; top: 10px; display: flex; flex-direction: column;
+  border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface);
+}
+.zoom button { width: 38px; height: 38px; border: 0; background: transparent; font-size: 1.15rem; }
+.zoom button + button { border-top: 1px solid var(--line); }
+.zoom button:hover { background: var(--accent-soft); }
+
+details.legend {
+  position: absolute; left: 10px; top: 10px; max-width: calc(100% - 70px);
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  font-size: .82rem;
+}
+details.legend summary { padding: 6px 10px; cursor: pointer; font-weight: 500; }
+details.legend ul { list-style: none; margin: 0; padding: 0 10px 8px; display: grid; gap: 3px; }
+details.legend li { display: flex; align-items: center; gap: 8px; }
+details.legend i { width: 22px; height: 5px; border-radius: 3px; display: inline-block; flex: none; }
+
+.stncard {
+  position: absolute; left: 10px; right: 10px; bottom: 10px; max-width: 360px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  padding: 12px 14px; box-shadow: 0 6px 20px rgba(0,0,0,.12);
+}
+.stncard h3 { margin: 0 0 6px; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
+.stncard .x { margin-left: auto; border: 0; background: transparent; font-size: 1.2rem; color: var(--muted); padding: 0 4px; }
+.stncard .row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.stncard .near { font-size: .85rem; color: var(--muted); margin-top: 6px; }
+
+/* ---------- 站號徽章 ---------- */
+.codes { display: inline-flex; gap: 4px; flex-wrap: wrap; vertical-align: middle; }
+.code {
+  font: 600 .72rem/1 var(--font-mono); padding: 3px 5px; border-radius: 5px;
+  border: 2px solid; background: var(--surface); color: var(--ink); white-space: nowrap;
+}
+
+/* ---------- 面板 ---------- */
+.panel {
+  min-width: 0; min-height: 0; display: flex; flex-direction: column;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+}
+.tabs { display: flex; border-bottom: 1px solid var(--line); flex: none; }
+.tabs button {
+  flex: 1; border: 0; background: transparent; padding: 12px 6px; font-weight: 500; color: var(--muted);
+  border-bottom: 3px solid transparent;
+}
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.pane { flex: 1; overflow: auto; padding: 14px 16px 20px; }
+.pane h2 { font: 700 1.2rem/1.35 var(--font-display); margin: 0 0 8px; text-wrap: balance; }
+.pane h4 { margin: 18px 0 6px; font-size: .78rem; letter-spacing: .12em; color: var(--muted); font-weight: 500; }
+
+.search { width: 100%; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 12px; }
+.chip {
+  border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 3px 11px; font-size: .85rem;
+}
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+
+.spotlist { list-style: none; margin: 0; padding: 0; display: grid; }
+.spotlist li + li { border-top: 1px solid var(--line); }
+.spotlist button {
+  width: 100%; text-align: left; border: 0; background: transparent; padding: 10px 4px;
+  display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: start;
+}
+.spotlist button:hover { background: var(--accent-soft); }
+.num {
+  width: 26px; height: 26px; border-radius: 50%; background: var(--pin); color: var(--pin-fg);
+  font: 600 .78rem/26px var(--font-mono); text-align: center;
+}
+.spotlist b { display: block; font-weight: 700; }
+.spotlist small { color: var(--muted); display: block; font-size: .82rem; line-height: 1.45; }
+.empty { color: var(--muted); padding: 16px 0; }
+
+.backbtn { display: block; border: 0; background: transparent; color: var(--accent); padding: 0; margin-bottom: 10px; font-size: .9rem; }
+.cat { display: inline-block; font-size: .75rem; padding: 1px 8px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); margin-bottom: 6px; }
+.detail p { margin: 0; }
+.stlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.stlist li { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.stlist .nm { font-weight: 500; min-width: 4.5em; }
+.near-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.near-list b { font-weight: 500; }
+.near-list span { color: var(--muted); font-size: .88rem; }
+.tip { margin-top: 16px; padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 6px 6px 0; font-size: .9rem; }
+
+.btn {
+  border: 1px solid var(--accent); background: var(--accent); color: var(--surface);
+  border-radius: 7px; padding: 6px 12px; font-size: .88rem; font-weight: 500;
+}
+.btn.ghost { background: transparent; color: var(--accent); }
+.btn.sm { padding: 2px 8px; font-size: .8rem; }
+
+/* ---------- 路線 ---------- */
+.rform { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+.rform label { display: grid; gap: 3px; font-size: .8rem; color: var(--muted); }
+.rform input { padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); width: 100%; }
+.rform .fields { display: grid; gap: 8px; }
+.rform .swap { height: 40px; width: 40px; border: 1px solid var(--line); border-radius: 8px; background: transparent; align-self: center; }
+.ractions { display: flex; gap: 8px; margin-top: 10px; }
+.err { color: #c0392b; margin-top: 10px; font-size: .9rem; }
+.summary { display: flex; gap: 18px; margin: 16px 0 8px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.summary div { display: grid; }
+.summary strong { font: 600 1.4rem/1.2 var(--font-mono); font-variant-numeric: tabular-nums; }
+.summary span { font-size: .78rem; color: var(--muted); }
+.steps { list-style: none; margin: 0; padding: 0; }
+.step { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 12px; }
+.step .bar { width: 6px; border-radius: 3px; margin: 6px 4px; }
+.step .body { padding: 2px 0 14px; min-width: 0; }
+.step .ln-name { font-weight: 700; }
+.step .dir { color: var(--muted); font-size: .85rem; }
+.step .stops { font-size: .85rem; color: var(--muted); margin-top: 4px; }
+.step .from, .step .to { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-weight: 500; }
+.transfer { color: var(--muted); font-size: .85rem; padding: 0 0 12px 26px; }
+.note { color: var(--muted); font-size: .8rem; margin-top: 12px; }
+
+.info section + section { margin-top: 18px; }
+.info h3 { font-size: 1rem; margin: 0 0 4px; }
+.info p, .info ul { margin: 0; font-size: .92rem; }
+.info ul { padding-left: 1.2em; }
+.info li + li { margin-top: 3px; }
+.lines-tbl { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.lines-tbl td { padding: 5px 4px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+
+@media (max-width: 860px) {
+  body { height: auto; }
+  html { height: auto; }
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .mapwrap { height: 60vh; min-height: 360px; }
+  .pane { overflow: visible; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>東京散策地圖</h1>
+  <p>地鐵路線查詢・熱門景點・週邊介紹</p>
+  <a class="back" href="../">← 回報修系統</a>
+</header>
+
+<div class="app">
+  <section class="mapwrap" aria-label="東京地圖">
+    <svg id="map" role="img" aria-label="東京都心路線與景點示意圖"></svg>
+    <details class="legend" id="legend"><summary>路線圖例</summary><ul id="legendList"></ul></details>
+    <div class="zoom">
+      <button type="button" id="zin" aria-label="放大">＋</button>
+      <button type="button" id="zout" aria-label="縮小">－</button>
+      <button type="button" id="zreset" aria-label="重設視角" style="font-size:.85rem">⟲</button>
+    </div>
+    <div class="stncard" id="stncard" hidden></div>
+  </section>
+
+  <aside class="panel">
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" id="tab-spots" aria-selected="true" aria-controls="pane-spots">景點</button>
+      <button type="button" role="tab" id="tab-route" aria-selected="false" aria-controls="pane-route">路線查詢</button>
+      <button type="button" role="tab" id="tab-info" aria-selected="false" aria-controls="pane-info">交通須知</button>
+    </div>
+
+    <div class="pane" id="pane-spots" role="tabpanel" aria-labelledby="tab-spots">
+      <div id="spotsList">
+        <input class="search" id="q" type="search" placeholder="搜尋景點、車站或週邊（例如：拉麵、櫻花）">
+        <div class="chips" id="cats"></div>
+        <ul class="spotlist" id="spotlist"></ul>
+      </div>
+      <div class="detail" id="spotDetail" hidden></div>
+    </div>
+
+    <div class="pane" id="pane-route" role="tabpanel" aria-labelledby="tab-route" hidden>
+      <h2>地鐵路線查詢</h2>
+      <form id="rform" autocomplete="off">
+        <div class="rform">
+          <div class="fields">
+            <label for="from">出發站<input id="from" list="stations" placeholder="例如：新宿"></label>
+            <label for="to">抵達站<input id="to" list="stations" placeholder="例如：淺草"></label>
+          </div>
+          <button type="button" class="swap" id="swap" aria-label="交換出發與抵達">⇅</button>
+        </div>
+        <div class="ractions">
+          <button class="btn" type="submit">查詢路線</button>
+          <button class="btn ghost" type="button" id="rclear">清除</button>
+        </div>
+      </form>
+      <datalist id="stations"></datalist>
+      <div id="rout"></div>
+    </div>
+
+    <div class="pane info" id="pane-info" role="tabpanel" aria-labelledby="tab-info" hidden>
+      <h2>交通須知</h2>
+      <section>
+        <h3>收錄路線</h3>
+        <table class="lines-tbl" id="linesTbl"></table>
+      </section>
+      <section>
+        <h3>車票與 IC 卡</h3>
+        <ul>
+          <li>Suica、PASMO 等 IC 卡可通用於 JR、東京 Metro、都營地鐵與百合海鷗號，進出站感應即可。</li>
+          <li>「Tokyo Subway Ticket」有 24／48／72 小時版本，可無限次搭乘東京 Metro 與都營地鐵，但不含 JR 與百合海鷗號。</li>
+          <li>JR 與地鐵屬不同公司，轉乘時通常需要出站再進站，IC 卡會自動計算票價。</li>
+        </ul>
+      </section>
+      <section>
+        <h3>搭車小提醒</h3>
+        <ul>
+          <li>營運時間大致為清晨 5 點至午夜，末班車依路線與車站不同，出發前請查詢。</li>
+          <li>平日 7:30–9:30 為通勤尖峰，帶大件行李盡量避開。</li>
+          <li>車站以「路線字母＋數字」編號（例如銀座線淺草站為 G19），不會讀日文站名時可對照編號。</li>
+          <li>部分路線早上尖峰設有女性專用車廂，月台地面會標示位置。</li>
+        </ul>
+      </section>
+      <section>
+        <h3>關於本地圖</h3>
+        <p>地圖為示意圖，車站位置依經緯度概略繪製，只收錄都心常用的 9 條路線。路線查詢的時間依距離估算，並加計每次轉乘約 5 分鐘，實際時刻請以各鐵路公司公告為準。</p>
+      </section>
+    </div>
+  </aside>
+</div>
+
+<script>
+'use strict';
+/* ====================== 資料 ====================== */
+const ST = {
+  '東京':[35.6812,139.7671],'神田':[35.6918,139.7709],'秋葉原':[35.6984,139.7731],'御徒町':[35.7075,139.7748],
+  '上野':[35.7138,139.7773],'鶯谷':[35.7215,139.7781],'日暮里':[35.7278,139.7710],'西日暮里':[35.7320,139.7668],
+  '田端':[35.7381,139.7608],'駒込':[35.7365,139.7470],'巢鴨':[35.7334,139.7393],'大塚':[35.7317,139.7286],
+  '池袋':[35.7295,139.7109],'目白':[35.7212,139.7065],'高田馬場':[35.7126,139.7038],'新大久保':[35.7013,139.7000],
+  '新宿':[35.6896,139.7006],'代代木':[35.6831,139.7020],'原宿':[35.6702,139.7027],'澀谷':[35.6580,139.7016],
+  '惠比壽':[35.6467,139.7101],'目黑':[35.6339,139.7157],'五反田':[35.6262,139.7236],'大崎':[35.6197,139.7286],
+  '品川':[35.6285,139.7388],'高輪Gateway':[35.6355,139.7407],'田町':[35.6457,139.7476],'濱松町':[35.6555,139.7570],
+  '新橋':[35.6663,139.7583],'有樂町':[35.6750,139.7630],
+  '表參道':[35.6652,139.7123],'外苑前':[35.6705,139.7178],'青山一丁目':[35.6727,139.7240],'赤坂見附':[35.6770,139.7370],
+  '溜池山王':[35.6736,139.7415],'虎之門':[35.6700,139.7497],'銀座':[35.6717,139.7650],'京橋':[35.6767,139.7701],
+  '日本橋':[35.6820,139.7740],'三越前':[35.6866,139.7733],'末廣町':[35.7025,139.7718],'上野廣小路':[35.7077,139.7727],
+  '稻荷町':[35.7114,139.7826],'田原町':[35.7109,139.7899],'淺草':[35.7106,139.7975],
+  '新大塚':[35.7262,139.7299],'茗荷谷':[35.7172,139.7370],'後樂園':[35.7075,139.7517],'本鄉三丁目':[35.7071,139.7604],
+  '御茶之水':[35.7000,139.7650],'淡路町':[35.6955,139.7676],'大手町':[35.6862,139.7660],'霞關':[35.6738,139.7510],
+  '國會議事堂前':[35.6745,139.7450],'四谷':[35.6860,139.7300],'四谷三丁目':[35.6880,139.7200],'新宿御苑前':[35.6886,139.7106],
+  '新宿三丁目':[35.6906,139.7048],
+  '廣尾':[35.6505,139.7222],'六本木':[35.6628,139.7314],'神谷町':[35.6630,139.7449],'虎之門之丘':[35.6672,139.7487],
+  '日比谷':[35.6745,139.7600],'東銀座':[35.6693,139.7671],'築地':[35.6680,139.7720],'八丁堀':[35.6748,139.7778],
+  '茅場町':[35.6797,139.7798],'人形町':[35.6863,139.7823],'小傳馬町':[35.6907,139.7780],'仲御徒町':[35.7076,139.7765],
+  '永田町':[35.6786,139.7397],'半藏門':[35.6857,139.7413],'九段下':[35.6955,139.7514],'神保町':[35.6960,139.7577],
+  '水天宮前':[35.6828,139.7854],'清澄白河':[35.6820,139.7990],'住吉':[35.6893,139.8155],'錦糸町':[35.6969,139.8143],
+  '押上':[35.7101,139.8132],
+  '高輪台':[35.6318,139.7302],'泉岳寺':[35.6385,139.7400],'三田':[35.6483,139.7477],'大門':[35.6563,139.7548],
+  '寶町':[35.6750,139.7717],'東日本橋':[35.6922,139.7848],'淺草橋':[35.6970,139.7863],'藏前':[35.7033,139.7910],
+  '本所吾妻橋':[35.7086,139.8045],'兩國':[35.6960,139.7930],
+  '汐留':[35.6630,139.7616],'竹芝':[35.6553,139.7623],'日之出':[35.6487,139.7593],'芝浦埠頭':[35.6386,139.7590],
+  '台場海濱公園':[35.6298,139.7783],'台場':[35.6255,139.7714],'東京國際郵輪碼頭':[35.6205,139.7728],
+  '電訊中心':[35.6175,139.7790],'青海':[35.6185,139.7835],'東京國際展示場':[35.6301,139.7932]
+};
+
+// num(i)：第 i 站的站號；dir[0]：往索引遞減方向，dir[1]：往索引遞增方向
+const LINES = [
+  { id:'Z', name:'東京 Metro 半藏門線', color:'#8F76D6', code:'Z', num:i=>i+1, dir:['往澀谷方面','往押上方面'],
+    st:['澀谷','表參道','青山一丁目','永田町','半藏門','九段下','神保町','大手町','三越前','水天宮前','清澄白河','住吉','錦糸町','押上'] },
+  { id:'A', name:'都營淺草線', color:'#E85298', code:'A', num:i=>i+5, dir:['往五反田・西馬込方面','往淺草・押上方面'],
+    st:['五反田','高輪台','泉岳寺','三田','大門','新橋','東銀座','寶町','日本橋','人形町','東日本橋','淺草橋','藏前','淺草','本所吾妻橋','押上'] },
+  { id:'H', name:'東京 Metro 日比谷線', color:'#B5B5AC', code:'H', num:i=>i+2, dir:['往惠比壽・中目黑方面','往上野・北千住方面'],
+    st:['惠比壽','廣尾','六本木','神谷町','虎之門之丘','霞關','日比谷','銀座','東銀座','築地','八丁堀','茅場町','人形町','小傳馬町','秋葉原','仲御徒町','上野'] },
+  { id:'M', name:'東京 Metro 丸之內線', color:'#F62E36', code:'M', num:i=>25-i, dir:['往池袋方面','往新宿・荻窪方面'],
+    st:['池袋','新大塚','茗荷谷','後樂園','本鄉三丁目','御茶之水','淡路町','大手町','東京','銀座','霞關','國會議事堂前','赤坂見附','四谷','四谷三丁目','新宿御苑前','新宿三丁目','新宿'] },
+  { id:'G', name:'東京 Metro 銀座線', color:'#FF9500', code:'G', num:i=>i+1, dir:['往澀谷方面','往淺草方面'],
+    st:['澀谷','表參道','外苑前','青山一丁目','赤坂見附','溜池山王','虎之門','新橋','銀座','京橋','日本橋','三越前','神田','末廣町','上野廣小路','上野','稻荷町','田原町','淺草'] },
+  { id:'JB', name:'JR 中央・總武線（各站停車）', color:'#FFD400', code:'JB', num:i=>i+18, dir:['往御茶之水・新宿方面','往錦糸町・千葉方面'],
+    st:['御茶之水','秋葉原','淺草橋','兩國','錦糸町'] },
+  { id:'JC', name:'JR 中央線快速', color:'#F15A22', code:'JC', num:i=>i+1, dir:['往東京方面','往新宿・高尾方面'],
+    st:['東京','神田','御茶之水','四谷','新宿'] },
+  { id:'JY', name:'JR 山手線', color:'#80C241', code:'JY', num:i=>i+1, loop:true, dir:['外回（順時針）','內回（逆時針）'],
+    st:['東京','神田','秋葉原','御徒町','上野','鶯谷','日暮里','西日暮里','田端','駒込','巢鴨','大塚','池袋','目白','高田馬場','新大久保','新宿','代代木','原宿','澀谷','惠比壽','目黑','五反田','大崎','品川','高輪Gateway','田町','濱松町','新橋','有樂町'] },
+  { id:'U', name:'百合海鷗號', color:'#1E88C8', code:'U', num:i=>i+1, dir:['往新橋方面','往台場・豐洲方面'],
+    st:['新橋','汐留','竹芝','日之出','芝浦埠頭','台場海濱公園','台場','東京國際郵輪碼頭','電訊中心','青海','東京國際展示場'] }
+];
+
+const CATS = ['寺社','地標','公園','購物','美食','藝文'];
+const SPOTS = [
+  { n:'淺草寺・雷門', c:'寺社', p:[35.7148,139.7967], st:['淺草','田原町'],
+    d:'東京最古老的寺院，相傳創建於西元 628 年。從掛著大紅燈籠的雷門走進仲見世通，兩側是販售人形燒、仙貝與紀念品的老店，盡頭是本堂與五重塔。',
+    near:[['仲見世通','約 250 公尺的參道商店街，邊走邊吃人形燒與炸饅頭'],['隅田川步道','河岸可同時看到晴空塔與朝日啤酒大樓'],['淺草花屋敷','1853 年開業，日本歷史最悠久的遊樂園'],['合羽橋道具街','廚具與食品模型專門街，步行約 10 分鐘']],
+    tip:'清晨或晚上人潮較少，入夜後本堂與五重塔會點燈。' },
+  { n:'東京晴空塔', c:'地標', p:[35.7101,139.8107], st:['押上','本所吾妻橋'],
+    d:'高 634 公尺，是世界最高的自立式電波塔。天望甲板位於 350 公尺、天望迴廊位於 450 公尺，天氣晴朗時能看到富士山。塔下的東京晴空街道有三百多間店舖。',
+    near:[['東京晴空街道','購物、美食與伴手禮集中的商場'],['墨田水族館','位於晴空街道內，以企鵝與水母展示聞名'],['東京水岸街道','沿隅田川高架橋下的商店街，可步行往淺草']],
+    tip:'建議事先網路購票，選日落前入場可一次看到白天、夕陽與夜景。' },
+  { n:'上野恩賜公園', c:'公園', p:[35.7150,139.7735], st:['上野','上野廣小路','御徒町'],
+    d:'日本最早的公園之一，園內集中了博物館、美術館與動物園。春天約有 800 棵櫻花盛開，是東京最熱門的賞櫻地點之一。',
+    near:[['東京國立博物館','日本歷史最悠久的博物館，收藏大量國寶'],['上野動物園','日本第一座動物園，可看到大貓熊'],['阿美橫丁','車站旁的平價市場街，乾貨、零食與小吃'],['不忍池','夏季滿池蓮花，可租天鵝船']],
+    tip:'多數博物館與動物園週一休館，出發前請先查詢。' },
+  { n:'秋葉原電器街', c:'購物', p:[35.7005,139.7712], st:['秋葉原','末廣町'],
+    d:'電器、動漫、遊戲與模型的集散地。中央通兩側是大型電器行與動漫專門店，假日午後中央通會實施步行者天國。',
+    near:[['神田明神','步行約 10 分鐘，擁有千年以上歷史的神社'],['mAAch ecute 神田萬世橋','由舊萬世橋車站紅磚高架改建的商場'],['2k540 AKI-OKA ARTISAN','高架橋下的手作工藝店街']],
+    tip:'免稅購物需出示護照；步行者天國實施與否依現場公告為準。' },
+  { n:'東京車站・皇居外苑', c:'地標', p:[35.6800,139.7575], st:['東京','大手町','日比谷'],
+    d:'東京車站丸之內站舍是 1914 年完工的紅磚建築，2012 年修復回創建時的樣貌。往西走過行幸通就是皇居外苑，可以看到二重橋與櫻田門。',
+    near:[['皇居東御苑','江戶城本丸遺跡，免費參觀，有固定休園日'],['丸之內仲通','行道樹與精品店林立的散步道'],['KITTE 丸之內','屋頂花園可俯瞰東京車站'],['東京車站一番街','車站內的拉麵街與動漫角色商店街']],
+    tip:'站舍入夜後點燈，KITTE 屋頂是拍攝車站全景的好位置。' },
+  { n:'銀座', c:'購物', p:[35.6710,139.7642], st:['銀座','東銀座','有樂町'],
+    d:'東京最具代表性的高級商業區，中央通兩側是百貨公司與國際品牌旗艦店。週末午後中央通實施步行者天國，可以在大馬路上散步。',
+    near:[['GINZA SIX','銀座最大的商業設施，屋頂有庭園'],['歌舞伎座','東銀座站直達，可購買只看一幕的單幕席'],['和光本館鐘塔','銀座四丁目路口的地標建築'],['伊東屋','創業超過百年的文具老舖']],
+    tip:'步行者天國的時段會依季節調整，以現場公告為準。' },
+  { n:'築地場外市場', c:'美食', p:[35.6655,139.7705], st:['築地','東銀座'],
+    d:'批發市場在 2018 年遷往豐洲後，場外市場仍保留約四百家店舖。早上可以吃到海鮮丼、玉子燒、生蠔與各式小吃。',
+    near:[['築地本願寺','外觀仿古印度風格的佛寺'],['濱離宮恩賜庭園','江戶時代引海水入池的潮入式庭園'],['銀座','步行約 10 分鐘']],
+    tip:'多數店家上午營業、下午就打烊，部分店家週日與週三公休，建議上午前往。' },
+  { n:'新宿御苑', c:'公園', p:[35.6852,139.7101], st:['新宿御苑前','新宿三丁目','新宿'],
+    d:'面積約 58 公頃，融合了日本庭園、英式風景庭園與法式整形庭園。園內禁止攜帶酒類與遊樂器材，環境安靜，是賞櫻與賞楓的熱門地點。',
+    near:[['新宿三丁目','百貨公司與居酒屋集中的街區'],['伊勢丹新宿店','美食地下街很受歡迎'],['新宿高島屋','南口旁的大型百貨']],
+    tip:'需購票入園，週一休園；櫻花季入口常大排長龍。' },
+  { n:'新宿・東京都廳', c:'地標', p:[35.6896,139.6922], st:['新宿'],
+    d:'新宿站是全世界每日乘降人數最多的車站。西口有摩天大樓群與東京都廳，45 樓展望室可免費入場；東口則是歌舞伎町與熱鬧的商店街。',
+    near:[['回憶橫丁','西口旁的燒烤小巷，昭和氣氛濃厚'],['歌舞伎町','餐廳與娛樂設施集中的不夜城'],['新宿東口 3D 貓看板','東口廣場前的巨型立體廣告']],
+    tip:'新宿站出口非常多，先確認目的地要走東口、西口還是南口。' },
+  { n:'明治神宮', c:'寺社', p:[35.6764,139.6993], st:['原宿','代代木'],
+    d:'1920 年創建，供奉明治天皇與昭憲皇太后。神宮被約十萬棵樹組成的人工森林包圍，走進鳥居後就能遠離城市喧囂。',
+    near:[['竹下通','原宿的流行服飾與甜點街'],['表參道','櫸木行道樹與名建築師設計的旗艦店'],['代代木公園','週末常有市集與活動']],
+    tip:'從原宿口走到本殿約 10 分鐘；開門時間隨日出日落調整。' },
+  { n:'澀谷十字路口', c:'地標', p:[35.6595,139.7005], st:['澀谷'],
+    d:'每次綠燈都有大批行人從四面八方同時穿越，是東京最具代表性的街景。周邊的高樓展望台與商業設施在近年陸續完工。',
+    near:[['SHIBUYA SKY','澀谷 SCRAMBLE SQUARE 頂樓的露天展望台'],['忠犬八公像','車站前的經典集合地點'],['MIYASHITA PARK','屋頂公園結合商場與橫丁']],
+    tip:'SHIBUYA SKY 的夕陽時段最熱門，建議提早網路預約。' },
+  { n:'六本木之丘', c:'藝文', p:[35.6604,139.7292], st:['六本木'],
+    d:'以森大樓為中心的複合設施，53 樓的森美術館以當代藝術展覽聞名，同棟有東京 City View 展望台。附近的國立新美術館與三得利美術館合稱「六本木藝術金三角」。',
+    near:[['森美術館','以當代藝術為主，開館到晚上'],['國立新美術館','波浪玻璃外牆的大型展覽館'],['東京中城','綠地、設計展館與餐廳']],
+    tip:'森美術館營業到晚上，適合安排在晚餐前後。' },
+  { n:'東京鐵塔', c:'地標', p:[35.6586,139.7454], st:['神谷町','大門','濱松町'],
+    d:'1958 年完工、高 333 公尺。主甲板位於 150 公尺、頂層甲板位於 250 公尺，橘白相間的塔身入夜點燈後非常醒目。',
+    near:[['增上寺','德川家的菩提寺，與鐵塔同框是經典構圖'],['芝公園','可在草地上仰望鐵塔'],['濱松町・大門','站前有不少平價午餐店']],
+    tip:'從增上寺三解脫門或芝公園一帶拍攝鐵塔最好看。' },
+  { n:'台場', c:'地標', p:[35.6232,139.7762], st:['台場','台場海濱公園'],
+    d:'東京灣上的人工島，可以眺望彩虹大橋與都心天際線。島上有購物中心、海濱公園與自由女神像複製品。',
+    near:[['台場海濱公園','人工沙灘，傍晚可看彩虹大橋點燈'],['富士電視台總部大樓','球體展望室是台場地標'],['DiverCity Tokyo Plaza','門前有實物大的機器人立像'],['彩虹大橋','設有步道，可以走路過橋']],
+    tip:'百合海鷗號坐最前排視野最好，從新橋到台場約 15 分鐘。' },
+  { n:'池袋太陽城', c:'購物', p:[35.7290,139.7196], st:['池袋'],
+    d:'結合購物中心、水族館、展望台與博物館的大型複合設施。池袋東口一帶有許多動漫周邊店，乙女路是女性向動漫商品的集中地。',
+    near:[['陽光水族館','頂樓戶外區的「天空企鵝」最受歡迎'],['乙女路','女性向動漫與同人商品店'],['南池袋公園','大片草坪與咖啡館']],
+    tip:'從池袋站東口步行約 10 分鐘，可走地下通道避開雨天。' },
+  { n:'清澄白河', c:'美食', p:[35.6810,139.7995], st:['清澄白河'],
+    d:'保留下町風情的住宅區，近年聚集許多自家烘焙咖啡館與小型藝廊。清澄庭園是明治時代的迴遊式庭園，池中的踏石很適合拍照。',
+    near:[['清澄庭園','以全國名石與水池構成的庭園'],['東京都現代美術館','步行約 15 分鐘'],['深川江戶資料館','重現江戶時代的庶民街景']],
+    tip:'咖啡館多在上午開門，可以安排早上散步。' },
+  { n:'谷中銀座', c:'美食', p:[35.7276,139.7666], st:['日暮里','西日暮里'],
+    d:'戰時較少受空襲波及的下町街區，保有木造老屋與寺院。約 170 公尺長的商店街有炸肉餅、和菓子與雜貨店，也被稱為「貓町」。',
+    near:[['夕陽階梯','商店街入口的階梯，傍晚可看夕陽'],['谷中靈園','春天櫻花隧道很美'],['根津神社','春季杜鵑花祭聞名']],
+    tip:'部分小店週一公休，傍晚前往可看到夕陽階梯的景色。' },
+  { n:'兩國國技館', c:'藝文', p:[35.6978,139.7944], st:['兩國'],
+    d:'大相撲東京場所的主場館，每年一月、五月與九月舉辦本場所。附近有許多相撲部屋和供應相撲火鍋的餐廳。',
+    near:[['相撲博物館','國技館內，開放日可免費參觀'],['舊安田庭園','免費入園的池泉迴遊式庭園'],['相撲火鍋','站前多家餐廳供應 chanko 鍋']],
+    tip:'本場所門票開賣後很快售完，非比賽期間也能來參觀博物館與周邊。' },
+  { n:'惠比壽花園廣場', c:'美食', p:[35.6420,139.7135], st:['惠比壽'],
+    d:'由啤酒工廠舊址改建的複合設施，有紅磚建築與歐式廣場。冬天展出巨型水晶吊燈，是熱門的聖誕燈飾景點。',
+    near:[['東京都寫真美術館','日本第一座攝影專門美術館'],['惠比壽橫丁','車站旁的小吃居酒屋巷'],['代官山','步行約 15 分鐘的時尚小區']],
+    tip:'從惠比壽站東口搭「惠比壽 Skywalk」電動步道約 5 分鐘。' },
+  { n:'神保町古書街', c:'藝文', p:[35.6950,139.7592], st:['神保町','御茶之水','九段下'],
+    d:'聚集上百間二手書店，從古籍、浮世繪到絕版漫畫都找得到。這一帶也是咖哩名店的激戰區，老派喫茶店很多。',
+    near:[['咖哩名店','歐風咖哩與印度咖哩名店林立'],['老派喫茶店','昭和時期營業至今的咖啡館'],['東京復活大聖堂','御茶之水的拜占庭式教堂']],
+    tip:'不少書店週日與國定假日休息，平日前往選擇最多。' }
+];
+
+/* ====================== 投影與工具 ====================== */
+const K = 10000, LON0 = 139.685, LAT0 = 35.745, COS = Math.cos(35.68 * Math.PI / 180);
+const P = ([lat, lon]) => [(lon - LON0) * K * COS, (LAT0 - lat) * K];
+const NS = 'http://www.w3.org/2000/svg';
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+const pts = arr => arr.map(p => P(p).map(v => v.toFixed(1)).join(',')).join(' ');
+const LINE = Object.fromEntries(LINES.map(l => [l.id, l]));
+const linesAt = name => LINES.filter(l => l.st.includes(name));
+const pad = n => String(n).padStart(2, '0');
+const codeOf = (l, name) => l.code + pad(l.num(l.st.indexOf(name)));
+const badges = name => '<span class="codes">' + linesAt(name).map(l =>
+  `<span class="code" style="border-color:${l.color}" title="${esc(l.name)}">${codeOf(l, name)}</span>`).join('') + '</span>';
+const kmBetween = (a, b) => {
+  const dy = (ST[a][0] - ST[b][0]) * 110.57, dx = (ST[a][1] - ST[b][1]) * 111.32 * COS;
+  return Math.hypot(dx, dy);
+};
+
+/* ====================== 繪製地圖 ====================== */
+const svg = $('#map');
+const gBase = el('g', {}, svg), gLines = el('g', {}, svg), gRoute = el('g', {}, svg),
+      gStn = el('g', {}, svg), gSpot = el('g', {}, svg), gLbl = el('g', {}, svg);
+
+el('rect', { x:-400, y:-400, width:2400, height:2400, class:'landpoly' }, gBase);
+el('polygon', { class:'sea', points: pts([[35.655,139.775],[35.650,139.790],[35.646,139.835],[35.590,139.835],[35.590,139.744],[35.615,139.750],[35.625,139.758],[35.635,139.765],[35.645,139.768]]) }, gBase);
+el('polygon', { class:'landpoly', points: pts([[35.637,139.766],[35.637,139.803],[35.612,139.803],[35.612,139.768]]) }, gBase);
+el('polyline', { class:'river', 'stroke-width':14, points: pts([[35.745,139.802],[35.725,139.804],[35.712,139.800],[35.705,139.796],[35.697,139.790],[35.688,139.789],[35.680,139.790],[35.670,139.785],[35.660,139.778],[35.652,139.776]]) }, gBase);
+[[[35.6852,139.7528],0.0075,0.0068],[[35.7160,139.7725],0.0035,0.0030],[[35.6735,139.6965],0.0050,0.0060],[[35.6852,139.7101],0.0045,0.0030],[[35.6585,139.7480],0.0022,0.0020]]
+  .forEach(([c, rlat, rlon]) => { const [x, y] = P(c); el('ellipse', { class:'park', cx:x, cy:y, rx:rlon*K*COS, ry:rlat*K }, gBase); });
+[['隅 田 川',[35.7230,139.8060],0],['東 京 灣',[35.6050,139.8150],0],['皇 居',[35.6860,139.7480],0]].forEach(([t, c]) => {
+  const [x, y] = P(c); const tx = el('text', { x, y, class:'geo-label', 'font-size':22 }, gBase); tx.textContent = t;
+});
+
+LINES.forEach(l => {
+  const list = l.loop ? [...l.st, l.st[0]] : l.st;
+  const p = pts(list.map(n => ST[n]));
+  el('polyline', { class:'casing', points:p }, gLines);
+  el('polyline', { class:'ln', points:p, stroke:l.color, 'data-line':l.id }, gLines);
+});
+
+const stnEls = {}, lblEls = [], spotEls = [];
+Object.keys(ST).forEach(name => {
+  const ls = linesAt(name); if (!ls.length) return;
+  const [x, y] = P(ST[name]);
+  const big = ls.length > 1 || ['東京','新宿','澀谷','池袋','品川','上野','淺草','押上','台場'].includes(name);
+  const g = el('g', { class:'stn' + (ls.length > 1 ? ' x' : ''), 'data-x':x, 'data-y':y, tabindex:0, role:'button', 'aria-label':name + '站' }, gStn);
+  const c = el('circle', { r: ls.length > 1 ? 5.5 : 3.6 }, g);
+  if (ls.length === 1) c.setAttribute('stroke', ls[0].color);
+  g.addEventListener('click', () => { if (!moved) showStation(name); });
+  g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showStation(name); } });
+  stnEls[name] = g;
+  const t = el('text', { class:'lbl' + (big ? '' : ' minor'), 'data-x':x, 'data-y':y }, gLbl);
+  t.textContent = name; t.dataset.major = big ? '1' : '';
+  lblEls.push(t);
+});
+SPOTS.forEach((s, i) => {
+  const [x, y] = P(s.p);
+  const g = el('g', { class:'spot', 'data-x':x, 'data-y':y, tabindex:0, role:'button', 'aria-label':s.n }, gSpot);
+  el('circle', { r:11 }, g);
+  el('text', {}, g).textContent = i + 1;
+  g.addEventListener('click', () => { if (!moved) openSpot(i); });
+  g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSpot(i); } });
+  spotEls.push(g);
+});
+
+/* ====================== 縮放與平移 ====================== */
+const all = [...Object.values(ST), ...SPOTS.map(s => s.p)].map(P);
+const minX = Math.min(...all.map(p => p[0])) - 30, maxX = Math.max(...all.map(p => p[0])) + 30;
+const minY = Math.min(...all.map(p => p[1])) - 30, maxY = Math.max(...all.map(p => p[1])) + 30;
+let vb = { x:0, y:0, w:1, h:1 }, baseW = 1;
+function fit() {
+  const r = svg.getBoundingClientRect(), ar = (r.width || 1) / (r.height || 1);
+  let w = maxX - minX, h = maxY - minY;
+  if (w / h > ar) h = w / ar; else w = h * ar;
+  vb = { x:(minX + maxX - w) / 2, y:(minY + maxY - h) / 2, w, h }; baseW = w; apply();
+}
+function apply() {
+  svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+  const r = svg.getBoundingClientRect();
+  const s = vb.w / (r.width || 1), zoom = baseW / vb.w;
+  for (const g of [...Object.values(stnEls), ...spotEls])
+    g.setAttribute('transform', `translate(${g.dataset.x},${g.dataset.y}) scale(${s})`);
+  const showMinor = zoom >= 1.9;
+  for (const t of lblEls) {
+    t.setAttribute('x', +t.dataset.x + 8 * s); t.setAttribute('y', +t.dataset.y + 4 * s);
+    t.setAttribute('font-size', (t.dataset.major ? 12.5 : 11) * s);
+    t.setAttribute('stroke-width', 3 * s);
+    t.style.display = (t.dataset.major || showMinor) ? '' : 'none';
+  }
+}
+function zoomAt(f, cx, cy) {
+  const nw = Math.min(Math.max(vb.w / f, baseW / 8), baseW * 1.4), k = nw / vb.w;
+  vb = { x: cx - (cx - vb.x) * k, y: cy - (cy - vb.y) * k, w: nw, h: vb.h * k }; apply();
+}
+function toUser(clientX, clientY) {
+  const r = svg.getBoundingClientRect();
+  return [vb.x + (clientX - r.left) / r.width * vb.w, vb.y + (clientY - r.top) / r.height * vb.h];
+}
+const center = () => [vb.x + vb.w / 2, vb.y + vb.h / 2];
+$('#zin').onclick = () => zoomAt(1.5, ...center());
+$('#zout').onclick = () => zoomAt(1 / 1.5, ...center());
+$('#zreset').onclick = fit;
+svg.addEventListener('wheel', e => { e.preventDefault(); zoomAt(e.deltaY < 0 ? 1.2 : 1 / 1.2, ...toUser(e.clientX, e.clientY)); }, { passive:false });
+
+const ptrs = new Map(); let moved = false, start = null, pinch = null;
+svg.addEventListener('pointerdown', e => {
+  ptrs.set(e.pointerId, [e.clientX, e.clientY]); moved = false;
+  if (ptrs.size === 1) start = { x:e.clientX, y:e.clientY, vb:{ ...vb } };
+  if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = Math.hypot(a[0] - b[0], a[1] - b[1]); }
+});
+svg.addEventListener('pointermove', e => {
+  if (!ptrs.has(e.pointerId)) return;
+  ptrs.set(e.pointerId, [e.clientX, e.clientY]);
+  if (ptrs.size === 2 && pinch) {
+    const [a, b] = [...ptrs.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+    zoomAt(d / pinch, ...toUser((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)); pinch = d; moved = true; return;
+  }
+  if (ptrs.size === 1 && start) {
+    const dx = e.clientX - start.x, dy = e.clientY - start.y;
+    if (!moved && Math.hypot(dx, dy) < 5) return;
+    if (!moved) { moved = true; svg.setPointerCapture(e.pointerId); svg.classList.add('dragging'); }
+    const r = svg.getBoundingClientRect();
+    vb.x = start.vb.x - dx / r.width * vb.w; vb.y = start.vb.y - dy / r.height * vb.h; apply();
+  }
+});
+const endPtr = e => {
+  ptrs.delete(e.pointerId); svg.classList.remove('dragging');
+  if (ptrs.size < 2) pinch = null;
+  if (ptrs.size === 0) { start = null; setTimeout(() => { moved = false; }, 0); }
+};
+svg.addEventListener('pointerup', endPtr); svg.addEventListener('pointercancel', endPtr);
+function focusOn(pt, zoom) {
+  const [x, y] = P(pt), w = baseW / zoom, k = w / vb.w;
+  if (vb.w > w) { vb.w = w; vb.h *= k; }
+  vb.x = x - vb.w / 2; vb.y = y - vb.h / 2; apply();
+}
+
+/* ====================== 車站卡片 ====================== */
+const card = $('#stncard');
+let selStn = null;
+function showStation(name) {
+  if (selStn) stnEls[selStn]?.classList.remove('sel');
+  selStn = name; stnEls[name].classList.add('sel');
+  const near = SPOTS.map((s, i) => [s, i]).filter(([s]) => s.st.includes(name));
+  card.innerHTML = `<h3>${esc(name)} ${badges(name)}<button class="x" type="button" aria-label="關閉">×</button></h3>
+    <div class="near">${linesAt(name).map(l => esc(l.name)).join('、')}</div>
+    ${near.length ? `<div class="near">附近景點：${near.map(([s, i]) => `<a href="#" data-spot="${i}">${esc(s.n)}</a>`).join('、')}</div>` : ''}
+    <div class="row"><button class="btn sm" type="button" data-set="from">設為出發站</button><button class="btn sm ghost" type="button" data-set="to">設為抵達站</button></div>`;
+  card.hidden = false;
+}
+card.addEventListener('click', e => {
+  const t = e.target;
+  if (t.closest('.x')) { card.hidden = true; stnEls[selStn]?.classList.remove('sel'); selStn = null; return; }
+  if (t.dataset.spot) { e.preventDefault(); openSpot(+t.dataset.spot); return; }
+  if (t.dataset.set) {
+    $('#' + t.dataset.set).value = selStn; showTab('route');
+    if ($('#from').value && $('#to').value) runRoute();
+  }
+});
+
+/* ====================== 分頁 ====================== */
+const TABS = ['spots', 'route', 'info'];
+function showTab(id) {
+  if (id === 'route' && lastRoute) drawRoute(lastRoute); else if (id !== 'route') clearRoute();
+  TABS.forEach(t => {
+    $('#tab-' + t).setAttribute('aria-selected', t === id);
+    $('#pane-' + t).hidden = t !== id;
+  });
+}
+TABS.forEach(t => $('#tab-' + t).addEventListener('click', () => showTab(t)));
+
+/* ====================== 景點清單 ====================== */
+let cat = '全部';
+$('#cats').innerHTML = ['全部', ...CATS].map(c => `<button type="button" class="chip" aria-pressed="${c === cat}">${c}</button>`).join('');
+$('#cats').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  cat = b.textContent;
+  $('#cats').querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', x === b));
+  renderList();
+});
+$('#q').addEventListener('input', renderList);
+function renderList() {
+  const q = $('#q').value.trim();
+  const hits = SPOTS.map((s, i) => [s, i]).filter(([s]) =>
+    (cat === '全部' || s.c === cat) &&
+    (!q || [s.n, s.d, s.c, s.tip, ...s.st, ...s.near.flat()].join(' ').includes(q)));
+  const ids = new Set(hits.map(h => h[1]));
+  spotEls.forEach((g, i) => g.classList.toggle('dim', !ids.has(i)));
+  $('#spotlist').innerHTML = hits.length ? hits.map(([s, i]) => `<li><button type="button" data-i="${i}">
+      <span class="num">${i + 1}</span>
+      <span><b>${esc(s.n)}</b><small>${esc(s.c)}・${s.st.map(esc).join('／')}站</small></span></button></li>`).join('')
+    : '<li class="empty">找不到符合的景點，試試其他關鍵字或分類。</li>';
+}
+$('#spotlist').addEventListener('click', e => { const b = e.target.closest('button[data-i]'); if (b) openSpot(+b.dataset.i); });
+
+let selSpot = -1;
+function openSpot(i) {
+  const s = SPOTS[i];
+  spotEls.forEach((g, j) => g.classList.toggle('sel', j === i));
+  selSpot = i;
+  showTab('spots');
+  $('#spotsList').hidden = true;
+  const d = $('#spotDetail'); d.hidden = false;
+  d.innerHTML = `<button type="button" class="backbtn" id="back">← 返回景點列表</button>
+    <div class="cat">${esc(s.c)}</div>
+    <h2>${i + 1}. ${esc(s.n)}</h2>
+    <p>${esc(s.d)}</p>
+    <h4>最近車站</h4>
+    <ul class="stlist">${s.st.map(n => `<li><span class="nm">${esc(n)}</span>${badges(n)}
+      <button type="button" class="btn sm ghost" data-to="${esc(n)}">規劃到這裡</button></li>`).join('')}</ul>
+    <h4>週邊推薦</h4>
+    <ul class="near-list">${s.near.map(([a, b]) => `<li><b>${esc(a)}</b><br><span>${esc(b)}</span></li>`).join('')}</ul>
+    <div class="tip"><strong>小提示：</strong>${esc(s.tip)}</div>`;
+  $('#pane-spots').scrollTop = 0;
+  focusOn(s.p, 2.6);
+}
+$('#spotDetail').addEventListener('click', e => {
+  if (e.target.id === 'back') {
+    $('#spotDetail').hidden = true; $('#spotsList').hidden = false;
+    spotEls.forEach(g => g.classList.remove('sel')); selSpot = -1; return;
+  }
+  const to = e.target.dataset.to;
+  if (to) { $('#to').value = to; showTab('route'); if ($('#from').value) runRoute(); else $('#from').focus(); }
+});
+
+/* ====================== 路線查詢（Dijkstra） ====================== */
+const TRANSFER_MIN = 5;
+const graph = new Map();
+const addEdge = (a, b, w) => { if (!graph.has(a)) graph.set(a, []); graph.get(a).push([b, w]); };
+LINES.forEach(l => {
+  const n = l.st.length, segs = l.loop ? n : n - 1;
+  for (let i = 0; i < segs; i++) {
+    const a = l.st[i], b = l.st[(i + 1) % n], w = kmBetween(a, b) / 0.55 + 0.6;
+    addEdge(`${a}|${l.id}`, `${b}|${l.id}`, w); addEdge(`${b}|${l.id}`, `${a}|${l.id}`, w);
+  }
+});
+Object.keys(ST).forEach(name => {
+  const ls = linesAt(name);
+  ls.forEach(x => ls.forEach(y => { if (x !== y) addEdge(`${name}|${x.id}`, `${name}|${y.id}`, TRANSFER_MIN); }));
+});
+
+function findRoute(from, to) {
+  const dist = new Map(), prev = new Map(), done = new Set(), q = [];
+  linesAt(from).forEach(l => { const k = `${from}|${l.id}`; dist.set(k, 0); q.push(k); });
+  let end = null;
+  while (q.length) {
+    q.sort((a, b) => dist.get(a) - dist.get(b));
+    const u = q.shift(); if (done.has(u)) continue; done.add(u);
+    if (u.split('|')[0] === to) { end = u; break; }
+    for (const [v, w] of graph.get(u) || []) {
+      const nd = dist.get(u) + w;
+      if (nd < (dist.has(v) ? dist.get(v) : Infinity)) { dist.set(v, nd); prev.set(v, u); q.push(v); }
+    }
+  }
+  if (!end) return null;
+  const path = []; for (let k = end; k; k = prev.get(k)) path.unshift(k.split('|'));
+  const segs = [];
+  for (const [st, ln] of path) {
+    const last = segs[segs.length - 1];
+    if (last && last.line === ln) { if (last.st[last.st.length - 1] !== st) last.st.push(st); }
+    else segs.push({ line: ln, st: [st] });
+  }
+  return { min: dist.get(end), segs: segs.filter(s => s.st.length > 1) };
+}
+
+function dirOf(l, a, b) {
+  const n = l.st.length, i = l.st.indexOf(a), j = l.st.indexOf(b);
+  const fwd = l.loop ? j === (i + 1) % n : j > i;
+  return l.dir[fwd ? 1 : 0];
+}
+
+function clearRoute() {
+  gRoute.innerHTML = ''; svg.classList.remove('routing');
+  Object.values(stnEls).forEach(g => g.classList.remove('on'));
+}
+function drawRoute(segs) {
+  clearRoute(); svg.classList.add('routing');
+  segs.forEach(s => {
+    const p = pts(s.st.map(n => ST[n]));
+    el('polyline', { class:'route-casing', points:p }, gRoute);
+    el('polyline', { class:'route-ln', points:p, stroke:LINE[s.line].color }, gRoute);
+    s.st.forEach(n => stnEls[n].classList.add('on'));
+  });
+}
+
+let lastRoute = null;
+const known = n => Object.prototype.hasOwnProperty.call(ST, n) && linesAt(n).length;
+function runRoute() {
+  const from = $('#from').value.trim().replace(/站$/, ''), to = $('#to').value.trim().replace(/站$/, '');
+  const out = $('#rout');
+  if (!known(from) || !known(to)) {
+    out.innerHTML = `<p class="err">${!known(from) ? `找不到出發站「${esc(from || '（空白）')}」` : `找不到抵達站「${esc(to || '（空白）')}」`}，請從下拉選單選擇本圖收錄的車站。</p>`;
+    lastRoute = null; clearRoute(); return;
+  }
+  if (from === to) { out.innerHTML = '<p class="err">出發站與抵達站相同，請重新選擇。</p>'; clearRoute(); return; }
+  const r = findRoute(from, to);
+  if (!r) { out.innerHTML = '<p class="err">找不到可行路線。</p>'; clearRoute(); return; }
+  const stops = r.segs.reduce((a, s) => a + s.st.length - 1, 0);
+  let html = `<div class="summary">
+      <div><strong>約 ${Math.round(r.min)}</strong><span>分鐘（估算）</span></div>
+      <div><strong>${r.segs.length - 1}</strong><span>次轉乘</span></div>
+      <div><strong>${stops}</strong><span>站</span></div></div><ol class="steps">`;
+  r.segs.forEach((s, k) => {
+    const l = LINE[s.line], a = s.st[0], b = s.st[s.st.length - 1];
+    const mid = s.st.slice(1, -1);
+    html += `<li class="step"><div class="bar" style="background:${l.color}"></div><div class="body">
+      <div class="from">${esc(a)} ${badges(a)}</div>
+      <div class="ln-name">${esc(l.name)}</div>
+      <div class="dir">${esc(dirOf(l, a, s.st[1]))}・搭 ${s.st.length - 1} 站</div>
+      ${mid.length ? `<div class="stops">途經：${mid.map(esc).join('、')}</div>` : ''}
+      <div class="to">${esc(b)} ${badges(b)}</div></div></li>`;
+    if (k < r.segs.length - 1) html += `<li class="transfer">在 ${esc(b)} 站轉乘（約 ${TRANSFER_MIN} 分鐘）</li>`;
+  });
+  html += '</ol><p class="note">時間為依距離估算的參考值，實際以各鐵路公司時刻為準。JR 與地鐵間轉乘通常需出站。</p>';
+  out.innerHTML = html;
+  lastRoute = r.segs; drawRoute(r.segs);
+}
+$('#rform').addEventListener('submit', e => { e.preventDefault(); runRoute(); });
+$('#swap').addEventListener('click', () => { const f = $('#from'), t = $('#to'); [f.value, t.value] = [t.value, f.value]; if (f.value && t.value) runRoute(); });
+$('#rclear').addEventListener('click', () => { $('#from').value = ''; $('#to').value = ''; $('#rout').innerHTML = ''; lastRoute = null; clearRoute(); });
+$('#stations').innerHTML = Object.keys(ST).filter(known).sort((a, b) => a.localeCompare(b, 'zh-Hant'))
+  .map(n => `<option value="${esc(n)}">${linesAt(n).map(l => codeOf(l, n)).join(' ')}</option>`).join('');
+
+/* ====================== 圖例 ====================== */
+$('#legendList').innerHTML = LINES.map(l => `<li><i style="background:${l.color}"></i>${esc(l.name)}</li>`).join('') +
+  `<li><span class="num" style="width:18px;height:18px;line-height:18px;font-size:.65rem">1</span>熱門景點</li>`;
+$('#linesTbl').innerHTML = LINES.map(l => `<tr><td><span class="code" style="border-color:${l.color}">${l.code}</span></td>
+  <td>${esc(l.name)}</td><td style="color:var(--muted)">${esc(l.st[0])}–${esc(l.st[l.st.length - 1])}</td></tr>`).join('');
+
+/* ====================== 啟動 ====================== */
+renderList();
+fit();
+new ResizeObserver(() => { const z = baseW / vb.w, c = center(); fit(); if (z > 1.01) { zoomAt(z, ...c); vb.x = c[0] - vb.w / 2; vb.y = c[1] - vb.h / 2; apply(); } }).observe(svg);
+$('#from').value = '新宿'; $('#to').value = '淺草';
+runRoute();
+clearRoute();
+</script>
+</body>
+</html>
