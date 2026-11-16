@@ -44,7 +44,8 @@
 - 資料來源：臺灣證券交易所公開資料（FMTQIK 加權指數、STOCK_DAY 收盤價、TWT49U 已除息紀錄、TWT48U 除權除息預告）。交易所資料只有除息日，配息發放日請以各投信公告為準。加權指數本身不配息。
 - 排程：`.github/workflows/stock-tracker.yml` 於週一至週五台灣時間 16:17 執行，結果提交至 `stock-tracker/data/`（`taiex.csv`、`prices.csv`、`dividends.csv`、`summary.json`；CSV 含 BOM，可直接用 Excel 開啟）。排程只在預設分支執行；首次可在 Actions 頁面手動執行「每日台股追蹤」並把月數填 12 回補一年。
 - 檢視：GitHub Pages 發佈後開啟 `/repair-system/stock-tracker/`；本機可在儲存庫根目錄執行 `python3 -m http.server 8000` 後開啟 `http://localhost:8000/stock-tracker/`。
-- 手動更新：`python3 stock-tracker/fetch_twse.py --months 1`（只用 Python 標準函式庫）。
+- 手動更新：`python3 stock-tracker/fetch_twse.py --months 1`（只用 Python 標準函式庫）；加 `--date YYYY-MM-DD` 可查詢指定日期。
+- 收盤價以查詢日為準：加權指數另以 MI_INDEX 抓取查詢當天收盤。若查詢日休市或尚未收盤，頁面顯示前一個交易日並在日期旁標 `*`。Actions 手動執行時也可填「查詢日」。
 - 測試：`python3 -m unittest discover -s stock-tracker/tests`（使用虛構回應，不需連網）。
 
 ## 東京散策地圖
