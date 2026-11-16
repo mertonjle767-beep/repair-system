@@ -9,6 +9,10 @@ on:
         description: "抓取最近幾個月的每日收盤（回補可填 12）"
         required: false
         default: "1"
+      date:
+        description: "查詢日（YYYY-MM-DD，留空為今天）"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -31,7 +35,8 @@ jobs:
       - name: 抓取加權指數、收盤價與配息
         env:
           MONTHS: ${{ inputs.months || '1' }}
-        run: python stock-tracker/fetch_twse.py --months "$MONTHS"
+          QUERY_DATE: ${{ inputs.date || '' }}
+        run: python stock-tracker/fetch_twse.py --months "$MONTHS" ${QUERY_DATE:+--date "$QUERY_DATE"}
       - name: 提交更新的資料
         run: |
           git config user.name "github-actions[bot]"

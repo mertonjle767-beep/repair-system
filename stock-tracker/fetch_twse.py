@@ -138,6 +138,30 @@ def fetch_taiex_month(month: dt.date, fetch=fetch_json) -> list[dict]:
     return rows
 
 
+def fetch_taiex_day(day: dt.date, fetch=fetch_json) -> list[dict]:
+    """MI_INDEX：指定日期的收盤指數。收盤後比 FMTQIK 更早更新，用來取得查詢當天的加權指數。"""
+    payload = fetch("afterTrading/MI_INDEX", date=day.strftime("%Y%m%d"), type="IND")
+    reported = str(payload.get("date") or "")
+    if reported and reported != day.strftime("%Y%m%d"):
+        return []  # 回傳的不是查詢當天（休市或尚未收盤）
+    for fields, data in tables(payload):
+        i_close = column(fields, "收盤指數", required=False)
+        if i_close is None:
+            continue
+        i_sign = column(fields, "漲跌(+/-)", required=False)
+        i_points = column(fields, "漲跌點數", required=False)
+        for row in data:
+            if re.sub(r"<[^>]+>|\s", "", str(row[0])) != "發行量加權股價指數":
+                continue
+            close = parse_number(row[i_close])
+            if not close:
+                return []
+            points = row[i_points] if i_points is not None else ""
+            change = signed_change(row[i_sign], points) if i_sign is not None else parse_number(points)
+            return [{"日期": day.isoformat(), "收盤指數": close, "漲跌點數": change}]
+    return []
+
+
 def fetch_stock_month(code: str, name: str, month: dt.date, fetch=fetch_json) -> list[dict]:
     """STOCK_DAY：個股（含 ETF）當月每日成交資訊。"""
     payload = fetch("afterTrading/STOCK_DAY", date=month.strftime("%Y%m01"), stockNo=code)
@@ -256,6 +280,9 @@ def to_float(text):
 
 
 def build_summary(taiex, prices, dividends, tracked, today: dt.date, recent_days=20) -> dict:
+    day = today.isoformat()
+    taiex = [r for r in taiex if r["日期"] <= day]  # 以查詢日為準，不顯示之後的資料
+    prices = [r for r in prices if r["日期"] <= day]
     latest_taiex = taiex[-1] if taiex else None
     year_ago = (today - dt.timedelta(days=365)).isoformat()
     items = []
@@ -285,6 +312,7 @@ def build_summary(taiex, prices, dividends, tracked, today: dt.date, recent_days
     recent = [{"日期": d, "加權指數": taiex_by_date.get(d, {}).get("收盤指數"),
                **{t["code"]: price_by_key.get((d, t["code"])) for t in tracked}} for d in dates]
     return {
+        "查詢日": day,
         "更新時間": dt.datetime.now(TW_TZ).isoformat(timespec="seconds"),
         "資料來源": "臺灣證券交易所 www.twse.com.tw（FMTQIK、STOCK_DAY、TWT49U、TWT48U）",
         "加權指數": latest_taiex,
@@ -314,6 +342,9 @@ def update(today: dt.date, month_count: int, fetch=fetch_json, data_dir: Path = 
         new_taiex += attempt(f"加權指數 {month:%Y-%m}", fetch_taiex_month, month)
         for code, name in names.items():
             new_prices += attempt(f"{code} {month:%Y-%m}", fetch_stock_month, code, name, month)
+
+    # 查詢當天的加權指數另外抓，避免 FMTQIK 尚未更新時停在前一個交易日
+    new_taiex += attempt(f"加權指數 {today}", fetch_taiex_day, today)
 
     new_divs = []
     start = today - dt.timedelta(days=400)  # 近 12 個月配息需要約一年資料，分段查詢
@@ -352,6 +383,7 @@ def main(argv=None) -> int:
     months = max(args.months, 2) if today.day <= 5 else args.months
     summary = update(today, months)
     taiex = summary["加權指數"]
+    print(f"查詢日：{today}")
     print(f"加權指數：{taiex['日期']} 收盤 {taiex['收盤指數']}" if taiex else "加權指數：尚無資料")
     for item in summary["追蹤標的"]:
         print(f"{item['代號']} {item['名稱']}：{item['日期']} 收盤 {item['收盤價']}，"

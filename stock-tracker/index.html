@@ -28,6 +28,7 @@ tr:last-child td{border-bottom:0}
 .tag.soon{border-color:var(--accent);color:var(--accent)}
 .note,.empty{color:var(--muted);font-size:.85rem}
 .error{color:var(--up)}
+.stale{color:var(--up);font-size:.8rem;margin-left:4px}
 </style>
 </head>
 <body>
@@ -42,7 +43,7 @@ tr:last-child td{border-bottom:0}
     <thead><tr><th>代號／名稱</th><th>收盤日</th><th>收盤價</th><th>漲跌</th><th>最近除息日</th><th>每股配息</th><th>下次除息日</th><th>預告配息</th><th>近12月配息</th><th>殖利率</th></tr></thead>
     <tbody id="etfs"></tbody>
   </table></div>
-  <p class="note">殖利率＝近 12 個月已除息配息合計 ÷ 最新收盤價。配息發放日請以各投信公告為準，交易所公開資料只提供除息日。</p>
+  <p class="note">收盤價以查詢日為準；日期旁標 <span class="stale">*</span> 表示查詢日休市或尚未收盤，顯示的是前一個交易日。殖利率＝近 12 個月已除息配息合計 ÷ 收盤價。配息發放日請以各投信公告為準，交易所公開資料只提供除息日。</p>
 
   <h2>配息紀錄</h2>
   <div class="wrap"><table>
@@ -78,12 +79,15 @@ fetch('data/summary.json', {cache: 'no-store'})
   .catch(err => { $('updated').innerHTML = `<span class="error">資料讀取失敗（${esc(err.message)}）</span>`; });
 
 function render(s) {
-  $('updated').textContent = `資料更新：${new Date(s['更新時間']).toLocaleString('zh-TW', {hour12: false})}`;
+  const day = s['查詢日'];
+  // 收盤日與查詢日不同時標示（休市或查詢時尚未收盤）
+  const dateCell = d => !d ? '—' : esc(d) + (day && d !== day ? '<span class="stale" title="非查詢日收盤">*</span>' : '');
+  $('updated').textContent = `查詢日：${day ?? '—'}　資料更新：${new Date(s['更新時間']).toLocaleString('zh-TW', {hour12: false})}`;
   $('source').textContent = `資料來源：${s['資料來源']}`;
 
   const t = s['加權指數'];
   $('taiex').innerHTML = t
-    ? `<span>發行量加權股價指數</span><span class="value">${num(t['收盤指數'])}</span>${change(t['漲跌點數'])}<span class="meta">${esc(t['日期'])} 收盤</span>`
+    ? `<span>發行量加權股價指數</span><span class="value">${num(t['收盤指數'])}</span>${change(t['漲跌點數'])}<span class="meta">${dateCell(t['日期'])} 收盤</span>`
     : '<span>發行量加權股價指數</span><span class="empty">尚無資料，待每日排程抓取</span>';
 
   const items = s['追蹤標的'];
@@ -91,7 +95,7 @@ function render(s) {
     const last = i['最近除息'], next = i['下次除息'];
     return row([
       `<strong>${esc(i['代號'])}</strong> ${esc(i['名稱'])}`,
-      esc(i['日期'] ?? '—'), num(i['收盤價']), change(i['漲跌']),
+      dateCell(i['日期']), num(i['收盤價']), change(i['漲跌']),
       esc(last?.['除息日'] ?? '—'), num(last?.['每股配息'], 3),
       next ? `<span class="tag soon">${esc(next['除息日'])}</span>` : '—', num(next?.['每股配息'], 3),
       num(i['近12月配息'], 3), i['殖利率'] == null ? '—' : `${num(i['殖利率'])}%`,

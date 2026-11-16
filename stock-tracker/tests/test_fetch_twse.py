@@ -17,6 +17,15 @@ FIXTURES = {
         "data": [["115/11/12", "1", "1", "1", "21,000.50", "-12.30"],
                  ["115/11/13", "1", "1", "1", "21,100.00", "99.50"]],
     },
+    "afterTrading/MI_INDEX": {
+        "stat": "OK", "date": "20261116",
+        "tables": [
+            {"title": "價格指數(臺灣證券交易所)",
+             "fields": ["指數", "收盤指數", "漲跌(+/-)", "漲跌點數", "漲跌百分比(%)", "特殊處理註記"],
+             "data": [["寶島股價指數", "50,000.00", "<p style='color:red'>+</p>", "1.00", "0.01", ""],
+                      ["發行量加權股價指數", "21,050.00", "<p style='color:green'>-</p>", "50.00", "-0.24", ""]]},
+        ],
+    },
     "afterTrading/STOCK_DAY": {
         "stat": "OK",
         "fields": ["日期", "成交股數", "成交金額", "開盤價", "最高價", "最低價", "收盤價", "漲跌價差", "成交筆數"],
@@ -81,7 +90,9 @@ class UpdateTests(unittest.TestCase):
     def test_update_writes_csv_and_summary(self):
         summary = self.run_update()
         self.assertEqual(summary["錯誤"], [])
-        self.assertEqual(summary["加權指數"], {"日期": "2026-11-13", "收盤指數": "21100.0", "漲跌點數": "99.5"})
+        self.assertEqual(summary["查詢日"], "2026-11-16")
+        # 查詢當天的指數來自 MI_INDEX，跌點帶負號
+        self.assertEqual(summary["加權指數"], {"日期": "2026-11-16", "收盤指數": "21050.0", "漲跌點數": "-50.0"})
         item = summary["追蹤標的"][0]
         self.assertEqual((item["日期"], item["收盤價"]), ("2026-11-13", "181.25"))
         self.assertEqual(item["最近除息"]["除息日"], "2026-07-16")
@@ -93,6 +104,18 @@ class UpdateTests(unittest.TestCase):
         with (self.dir / "data" / "dividends.csv").open(encoding="utf-8-sig") as f:
             codes = {r["代號"] for r in csv.DictReader(f)}
         self.assertEqual(codes, {"0050"})  # 未追蹤的 2330 不寫入
+
+    def test_taiex_day_ignores_other_dates(self):
+        holiday = dict(FIXTURES["afterTrading/MI_INDEX"], date="20261113")
+        self.assertEqual(ft.fetch_taiex_day(dt.date(2026, 11, 15), fetch=lambda *a, **k: holiday), [])
+        self.assertEqual(ft.fetch_taiex_day(dt.date(2026, 11, 15),
+                                            fetch=lambda *a, **k: {"stat": "很抱歉，沒有符合條件的資料!"}), [])
+
+    def test_past_query_date_hides_later_data(self):
+        summary = ft.update(dt.date(2026, 11, 12), 1, fetch=fake_fetch, data_dir=self.dir / "data",
+                            watchlist=self.watch)
+        self.assertEqual(summary["加權指數"]["日期"], "2026-11-12")
+        self.assertEqual(summary["追蹤標的"][0]["日期"], "2026-11-12")
 
     def test_update_is_idempotent(self):
         self.run_update()
