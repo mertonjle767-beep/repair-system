@@ -11,21 +11,28 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
-/* Layout: 地圖佔主畫面，右側（手機為下方）分頁面板：景點／路線／須知 */
+/* Layout: 藍色頁首（紅項圈＋鈴鐺）下方，地圖佔主畫面，右側（手機為下方）分頁面板 */
+/* Color: 哆啦A夢配色——天空藍、白、項圈紅、鈴鐺黃 */
 :root {
-  --bg: #e9edf1;
-  --land: #f8f9fb;
-  --sea: #c9dce8;
-  --park: #d3e5cc;
-  --river: #b4cfdf;
-  --ink: #18212c;
-  --muted: #5b6878;
-  --line: #d6dce3;
+  --bg: #e4f3fc;
+  --land: #f9fcfe;
+  --sea: #bde2f5;
+  --park: #d5ebc8;
+  --river: #a6d5ef;
+  --ink: #10243a;
+  --muted: #4d6880;
+  --line: #cde3f0;
   --surface: #ffffff;
-  --accent: #24408f;
-  --accent-soft: #e2e8f6;
-  --pin: #24408f;
+  --accent: #0077c0;
+  --accent-soft: #dbeffb;
+  --pin: #e5322d;
   --pin-fg: #ffffff;
+  --dora: #0a9be0;
+  --on-dora: #ffffff;
+  --on-dora-soft: #e3f4fd;
+  --collar: #e5322d;
+  --bell: #f6c40f;
+  --bell-ink: #4a3200;
   --font-display: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
   --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
@@ -33,16 +40,18 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #10151b; --land: #19202a; --sea: #0e2231; --park: #1d2e23; --river: #173246;
-    --ink: #e5e9ef; --muted: #95a2b2; --line: #2b3542; --surface: #161c24;
-    --accent: #8fa7ff; --accent-soft: #232d48; --pin: #8fa7ff; --pin-fg: #10151b;
+    --bg: #0b1a26; --land: #11222e; --sea: #0a2b3f; --park: #17301f; --river: #134461;
+    --ink: #e6f2fa; --muted: #93acc0; --line: #22394a; --surface: #0f2030;
+    --accent: #4cc0f5; --accent-soft: #15344a; --pin: #ff5a4f; --pin-fg: #ffffff;
+    --dora: #0a6fa8; --on-dora: #ffffff; --on-dora-soft: #cfe9f8; --collar: #d42f2a; --bell: #f6c40f; --bell-ink: #4a3200;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #10151b; --land: #19202a; --sea: #0e2231; --park: #1d2e23; --river: #173246;
-  --ink: #e5e9ef; --muted: #95a2b2; --line: #2b3542; --surface: #161c24;
-  --accent: #8fa7ff; --accent-soft: #232d48; --pin: #8fa7ff; --pin-fg: #10151b;
+  --bg: #0b1a26; --land: #11222e; --sea: #0a2b3f; --park: #17301f; --river: #134461;
+  --ink: #e6f2fa; --muted: #93acc0; --line: #22394a; --surface: #0f2030;
+  --accent: #4cc0f5; --accent-soft: #15344a; --pin: #ff5a4f; --pin-fg: #ffffff;
+  --dora: #0a6fa8; --on-dora: #ffffff; --on-dora-soft: #cfe9f8; --collar: #d42f2a; --bell: #f6c40f; --bell-ink: #4a3200;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -66,8 +75,19 @@ header.top {
 header.top h1 {
   margin: 0; font: 900 1.6rem/1.2 var(--font-display); letter-spacing: .04em;
 }
-header.top p { margin: 0; color: var(--muted); font-size: .9rem; }
-header.top a.back { margin-left: auto; color: var(--muted); font-size: .85rem; }
+header.top {
+  background: var(--dora); color: var(--on-dora); border-bottom: 7px solid var(--collar);
+  margin-bottom: 14px; align-items: center;
+}
+header.top p { margin: 0; color: var(--on-dora-soft); font-size: .9rem; }
+header.top a.back { margin-left: auto; color: var(--on-dora); font-size: .85rem; }
+.bell {
+  position: relative; width: 26px; height: 26px; border-radius: 50%; flex: none; align-self: center;
+  background: var(--bell); border: 1.5px solid var(--bell-ink);
+  box-shadow: 0 0 0 3px var(--on-dora);
+}
+.bell::before { content: ""; position: absolute; left: 2px; right: 2px; top: 8px; height: 1.5px; background: var(--bell-ink); }
+.bell::after { content: ""; position: absolute; left: 50%; top: 13px; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: var(--bell-ink); box-shadow: 0 4px 0 -1px var(--bell-ink); }
 
 .app {
   flex: 1; min-height: 0;
@@ -104,7 +124,8 @@ header.top a.back { margin-left: auto; color: var(--muted); font-size: .85rem; }
 .spot { cursor: pointer; }
 .spot circle { fill: var(--pin); stroke: var(--land); stroke-width: 2; vector-effect: non-scaling-stroke; }
 .spot text { fill: var(--pin-fg); font: 600 11px var(--font-mono); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
-.spot.sel circle { fill: #e0532f; }
+.spot.sel circle { fill: var(--bell); stroke: var(--bell-ink); }
+.spot.sel text { fill: var(--bell-ink); }
 .spot.dim { opacity: .25; }
 svg.routing .ln, svg.routing .stn { opacity: .22; }
 svg.routing .stn.on { opacity: 1; }
@@ -156,7 +177,7 @@ details.legend i { width: 22px; height: 5px; border-radius: 3px; display: inline
   flex: 1; border: 0; background: transparent; padding: 12px 6px; font-weight: 500; color: var(--muted);
   border-bottom: 3px solid transparent;
 }
-.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--collar); }
 .pane { flex: 1; overflow: auto; padding: 14px 16px 20px; }
 .pane h2 { font: 700 1.2rem/1.35 var(--font-display); margin: 0 0 8px; text-wrap: balance; }
 .pane h4 { margin: 18px 0 6px; font-size: .78rem; letter-spacing: .12em; color: var(--muted); font-weight: 500; }
@@ -245,6 +266,7 @@ details.legend i { width: 22px; height: 5px; border-radius: 3px; display: inline
 </head>
 <body>
 <header class="top">
+  <span class="bell" aria-hidden="true"></span>
   <h1>東京散策地圖</h1>
   <p>地鐵路線查詢・熱門景點・週邊介紹</p>
   <a class="back" href="../">← 回報修系統</a>
