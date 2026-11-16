@@ -39,7 +39,7 @@
 
 ## 每日台股追蹤（附加功能）
 
-`stock-tracker/` 為與報修系統無關的獨立小工具，每個交易日追蹤加權指數收盤，以及 00878、00919、0056、0050、00713 的收盤價、除息日與每股配息。追蹤清單在 `stock-tracker/watchlist.json` 修改。
+`stock-tracker/` 為與報修系統無關的獨立小工具，每個交易日追蹤加權指數收盤，以及 00878、00919、0056、0050、00713、2330、00929、00406A 的收盤價、除息日與每股配息。追蹤清單在 `stock-tracker/watchlist.json` 修改。
 
 - 資料來源：臺灣證券交易所公開資料（FMTQIK 加權指數、STOCK_DAY 收盤價、TWT49U 已除息紀錄、TWT48U 除權除息預告）。交易所資料只有除息日，配息發放日請以各投信公告為準。加權指數本身不配息。
 - 排程：`.github/workflows/stock-tracker.yml` 於週一至週五台灣時間 16:17 執行，結果提交至 `stock-tracker/data/`（`taiex.csv`、`prices.csv`、`dividends.csv`、`summary.json`；CSV 含 BOM，可直接用 Excel 開啟）。排程只在預設分支執行；首次可在 Actions 頁面手動執行「每日台股追蹤」並把月數填 12 回補一年。
