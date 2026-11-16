@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>每日台股追蹤</title>
+<style>
+:root{--bg:#f6f7f5;--card:#fff;--text:#1d2420;--muted:#5d6862;--line:#dde2de;--up:#c62828;--down:#1b7f3b;--accent:#1f5f46}
+@media (prefers-color-scheme:dark){:root{--bg:#141816;--card:#1d2320;--text:#e7ece9;--muted:#9aa6a0;--line:#2e3632;--up:#ff6b6b;--down:#5fd38a;--accent:#7cc8a4}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
+main{max-width:1000px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:1.5rem;margin:0 0 4px}
+h2{font-size:1.1rem;margin:28px 0 10px}
+.meta{color:var(--muted);font-size:.9rem;margin:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.index{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px;margin-top:16px}
+.index .value{font-size:2rem;font-weight:700;font-variant-numeric:tabular-nums}
+.wrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{color:var(--muted);font-weight:600;font-size:.85rem;background:var(--card);position:sticky;top:0}
+th:first-child,td:first-child,.l{text-align:left}
+tr:last-child td{border-bottom:0}
+#divs td:nth-child(2),#divs td:last-child{text-align:left}
+.up{color:var(--up)}.down{color:var(--down)}
+.tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:.8rem;border:1px solid var(--line)}
+.tag.soon{border-color:var(--accent);color:var(--accent)}
+.note,.empty{color:var(--muted);font-size:.85rem}
+.error{color:var(--up)}
+</style>
+</head>
+<body>
+<main>
+  <h1>每日台股追蹤</h1>
+  <p class="meta" id="updated">讀取中…</p>
+
+  <div class="card index" id="taiex" aria-live="polite"></div>
+
+  <h2>追蹤 ETF</h2>
+  <div class="wrap"><table>
+    <thead><tr><th>代號／名稱</th><th>收盤日</th><th>收盤價</th><th>漲跌</th><th>最近除息日</th><th>每股配息</th><th>下次除息日</th><th>預告配息</th><th>近12月配息</th><th>殖利率</th></tr></thead>
+    <tbody id="etfs"></tbody>
+  </table></div>
+  <p class="note">殖利率＝近 12 個月已除息配息合計 ÷ 最新收盤價。配息發放日請以各投信公告為準，交易所公開資料只提供除息日。</p>
+
+  <h2>配息紀錄</h2>
+  <div class="wrap"><table>
+    <thead><tr><th>除息日</th><th class="l">代號／名稱</th><th>每股配息</th><th>除息前收盤價</th><th>除息參考價</th><th class="l">狀態</th></tr></thead>
+    <tbody id="divs"></tbody>
+  </table></div>
+
+  <h2>近期收盤</h2>
+  <div class="wrap"><table>
+    <thead id="recent-head"></thead>
+    <tbody id="recent"></tbody>
+  </table></div>
+
+  <p class="note" id="source"></p>
+</main>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = (v, d = 2) => v === null || v === undefined || v === '' ? '—'
+  : Number(v).toLocaleString('zh-TW', {minimumFractionDigits: d, maximumFractionDigits: d});
+const change = v => {
+  if (v === null || v === undefined || v === '') return '<span>—</span>';
+  const n = Number(v);
+  return `<span class="${n > 0 ? 'up' : n < 0 ? 'down' : ''}">${n > 0 ? '+' : ''}${num(n)}</span>`;
+};
+const row = cells => `<tr>${cells.map(c => `<td>${c}</td>`).join('')}</tr>`;
+const emptyRow = (cols, text) => `<tr><td colspan="${cols}" class="empty l">${text}</td></tr>`;
+
+fetch('data/summary.json', {cache: 'no-store'})
+  .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+  .then(render)
+  .catch(err => { $('updated').innerHTML = `<span class="error">資料讀取失敗（${esc(err.message)}）</span>`; });
+
+function render(s) {
+  $('updated').textContent = `資料更新：${new Date(s['更新時間']).toLocaleString('zh-TW', {hour12: false})}`;
+  $('source').textContent = `資料來源：${s['資料來源']}`;
+
+  const t = s['加權指數'];
+  $('taiex').innerHTML = t
+    ? `<span>發行量加權股價指數</span><span class="value">${num(t['收盤指數'])}</span>${change(t['漲跌點數'])}<span class="meta">${esc(t['日期'])} 收盤</span>`
+    : '<span>發行量加權股價指數</span><span class="empty">尚無資料，待每日排程抓取</span>';
+
+  const items = s['追蹤標的'];
+  $('etfs').innerHTML = items.map(i => {
+    const last = i['最近除息'], next = i['下次除息'];
+    return row([
+      `<strong>${esc(i['代號'])}</strong> ${esc(i['名稱'])}`,
+      esc(i['日期'] ?? '—'), num(i['收盤價']), change(i['漲跌']),
+      esc(last?.['除息日'] ?? '—'), num(last?.['每股配息'], 3),
+      next ? `<span class="tag soon">${esc(next['除息日'])}</span>` : '—', num(next?.['每股配息'], 3),
+      num(i['近12月配息'], 3), i['殖利率'] == null ? '—' : `${num(i['殖利率'])}%`,
+    ]);
+  }).join('');
+
+  const divs = s['配息紀錄'];
+  const names = Object.fromEntries(items.map(i => [i['代號'], i['名稱']]));
+  $('divs').innerHTML = divs.length ? divs.map(d => row([
+    esc(d['除息日']), `<span class="l">${esc(d['代號'])} ${esc(names[d['代號']] || d['名稱'])}</span>`,
+    num(d['每股配息'], 3), num(d['除息前收盤價']), num(d['除息參考價']),
+    `<span class="tag${d['狀態'] === '預告' ? ' soon' : ''}">${esc(d['狀態'])}</span>`,
+  ])).join('') : emptyRow(6, '尚無配息資料');
+
+  const codes = items.map(i => i['代號']);
+  $('recent-head').innerHTML = `<tr><th>日期</th><th>加權指數</th>${codes.map(c => `<th>${esc(c)}</th>`).join('')}</tr>`;
+  const recent = s['近期收盤'];
+  $('recent').innerHTML = recent.length
+    ? recent.map(r => row([esc(r['日期']), num(r['加權指數']), ...codes.map(c => num(r[c]))])).join('')
+    : emptyRow(codes.length + 2, '尚無收盤資料');
+}
+</script>
+</body>
+</html>

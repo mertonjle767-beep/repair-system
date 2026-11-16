@@ -36,3 +36,13 @@
 更新程式或快取資產時須同步遞增 `sw.js` 的 `CACHE` 版本；新版會等待舊版視窗全部關閉後啟用，避免中斷填表。設定與公開 publishable key 屬介面快取，金鑰變更也須更新版本。勿在前端放 secret 或 service_role。SDK v2.99.1 已收錄於 `vendor/`（附 MIT 授權），頁面不再依賴 CDN 載入 SDK。
 
 驗證方式：在 localhost／HTTPS 首次開啟，確認 manifest 與 Service Worker 註冊成功；離線重新開啟首頁應可見表單與離線提示，按送出不應有 API 寫入。恢復連線後確認可手動重新整理與送出。以 `/repair-system/` 子路徑測試安裝範圍，並確認快取只有介面資產，沒有資料庫回應。實際新增與 RLS 權限仍需在設定完成的 Supabase 測試專案驗證。
+
+## 每日台股追蹤（附加功能）
+
+`stock-tracker/` 為與報修系統無關的獨立小工具，每個交易日追蹤加權指數收盤，以及 00878、00919、0056、0050、00713 的收盤價、除息日與每股配息。追蹤清單在 `stock-tracker/watchlist.json` 修改。
+
+- 資料來源：臺灣證券交易所公開資料（FMTQIK 加權指數、STOCK_DAY 收盤價、TWT49U 已除息紀錄、TWT48U 除權除息預告）。交易所資料只有除息日，配息發放日請以各投信公告為準。加權指數本身不配息。
+- 排程：`.github/workflows/stock-tracker.yml` 於週一至週五台灣時間 16:17 執行，結果提交至 `stock-tracker/data/`（`taiex.csv`、`prices.csv`、`dividends.csv`、`summary.json`；CSV 含 BOM，可直接用 Excel 開啟）。排程只在預設分支執行；首次可在 Actions 頁面手動執行「每日台股追蹤」並把月數填 12 回補一年。
+- 檢視：GitHub Pages 發佈後開啟 `/repair-system/stock-tracker/`；本機可在儲存庫根目錄執行 `python3 -m http.server 8000` 後開啟 `http://localhost:8000/stock-tracker/`。
+- 手動更新：`python3 stock-tracker/fetch_twse.py --months 1`（只用 Python 標準函式庫）。
+- 測試：`python3 -m unittest discover -s stock-tracker/tests`（使用虛構回應，不需連網）。

@@ -1,0 +1,45 @@
+name: 每日台股追蹤
+
+on:
+  schedule:
+    - cron: "17 8 * * 1-5" # UTC 08:17 = 台灣時間 16:17（週一至週五收盤後）
+  workflow_dispatch:
+    inputs:
+      months:
+        description: "抓取最近幾個月的每日收盤（回補可填 12）"
+        required: false
+        default: "1"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stock-tracker
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 測試解析程式
+        run: python -m unittest discover -s stock-tracker/tests
+      - name: 抓取加權指數、收盤價與配息
+        env:
+          MONTHS: ${{ inputs.months || '1' }}
+        run: python stock-tracker/fetch_twse.py --months "$MONTHS"
+      - name: 提交更新的資料
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add stock-tracker/data
+          if git diff --cached --quiet; then
+            echo "資料沒有變動"
+          else
+            git commit -m "更新每日台股資料 $(TZ=Asia/Taipei date +%F)"
+            git push
+          fi
