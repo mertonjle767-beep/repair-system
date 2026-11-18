@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>架材重量試算</title>
+<meta name="description" content="架材單重 × 數量即時計算總重與所需車數。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>body{margin:0}</style>
+<style>
+/* Layout: sticky load-ticket header with live total, then a grouped parts list (重型 / 輕型 tabs) */
+:root{
+  --bg:#eef1f4; --surface:#ffffff; --surface-2:#f6f8fa; --line:#d6dce3;
+  --fg:#1b2430; --muted:#5d6b7b; --accent:#c45a00; --accent-soft:#fff1e3;
+  --steel:#2f4a66; --steel-fg:#ffffff; --ok:#1f7a4d;
+  --font-body:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;
+  --font-num:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12171d; --surface:#1a2129; --surface-2:#202933; --line:#2e3946;
+  --fg:#e6ebf0; --muted:#94a2b3; --accent:#ff9a3d; --accent-soft:#3a2614;
+  --steel:#24384e; --steel-fg:#eef3f8; --ok:#5cc792; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171d; --surface:#1a2129; --surface-2:#202933; --line:#2e3946;
+  --fg:#e6ebf0; --muted:#94a2b3; --accent:#ff9a3d; --accent-soft:#3a2614;
+  --steel:#24384e; --steel-fg:#eef3f8; --ok:#5cc792; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--steel)}
+.num{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+.wrap{max-width:980px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--steel);color:var(--steel-fg);box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.top .wrap{padding-block:12px;display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px}
+.brand{display:flex;flex-direction:column;min-width:0;flex:1 1 200px}
+.brand h1{margin:0;font-size:20px;font-weight:900;letter-spacing:.04em}
+.brand span{font-size:12px;opacity:.75}
+.totals{display:flex;gap:20px;align-items:flex-end;flex-wrap:wrap}
+.tot{display:flex;flex-direction:column;align-items:flex-end}
+.tot small{font-size:11px;letter-spacing:.08em;opacity:.75}
+.tot b{font-family:var(--font-num);font-size:26px;line-height:1.1;font-weight:600}
+.tot.big b{font-size:34px;color:#ffc58a}
+.tot b i{font-style:normal;font-size:13px;margin-left:3px;opacity:.8}
+
+/* ticket fields */
+.ticket{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 14px}
+.field{display:flex;flex-direction:column;gap:3px;min-width:0}
+.field label{font-size:12px;color:var(--muted);letter-spacing:.05em}
+.field input,.field select{font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--fg);min-width:0;width:100%}
+
+/* controls */
+.bar{margin-top:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.tabs{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.tabs button{font:inherit;font-weight:700;border:0;background:transparent;color:var(--muted);padding:8px 16px;cursor:pointer;display:flex;gap:8px;align-items:baseline}
+.tabs button[aria-selected="true"]{background:var(--accent);color:#fff}
+.tabs button .num{font-size:12px;font-weight:500;opacity:.9}
+.search{flex:1 1 180px;min-width:0;font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg)}
+.chk{display:flex;gap:6px;align-items:center;font-size:14px;color:var(--muted);cursor:pointer;user-select:none}
+.btn{font:inherit;font-size:14px;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.warn{color:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+/* list */
+.list{margin-top:12px;background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.grp{padding:6px 14px;background:var(--surface-2);border-top:1px solid var(--line);font-weight:700;font-size:13px;color:var(--muted);display:flex;justify-content:space-between;gap:10px}
+.grp:first-child{border-top:0}
+.grp .num{color:var(--fg);font-weight:500}
+.row{display:grid;grid-template-columns:38px minmax(0,1fr) 82px 128px 96px;gap:10px;align-items:center;padding:7px 14px;border-top:1px solid var(--line)}
+.row.on{background:var(--accent-soft)}
+.no{font-family:var(--font-num);font-size:12px;color:var(--muted)}
+.name{min-width:0}
+.name b{font-weight:500}
+.name span{display:block;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.unit{text-align:right;font-family:var(--font-num);font-size:13.5px;color:var(--muted)}
+.unit input{width:70px;text-align:right;font:inherit;padding:4px 6px;border:1px dashed var(--accent);border-radius:5px;background:var(--surface);color:var(--fg)}
+.qty{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface)}
+.qty button{width:30px;border:0;background:var(--surface-2);color:var(--fg);font-size:17px;cursor:pointer;flex:none}
+.qty input{width:100%;min-width:0;border:0;text-align:center;font-family:var(--font-num);font-size:15px;padding:6px 2px;background:transparent;color:var(--fg)}
+.qty input::-webkit-inner-spin-button{appearance:none}
+.sub{text-align:right;font-family:var(--font-num);font-weight:600}
+.sub.zero{color:var(--line);font-weight:500}
+.head{font-size:12px;color:var(--muted);background:var(--surface);border-top:0;padding-block:8px;letter-spacing:.05em}
+.head div:nth-child(3),.head div:nth-child(5){text-align:right}
+.head div:nth-child(4){text-align:center}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+
+/* packing notes */
+.notes{margin:18px 0 32px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px}
+.card h2{margin:0 0 8px;font-size:15px}
+.card ul{margin:0;padding-left:18px;color:var(--muted);font-size:14px}
+.card table{width:100%;border-collapse:collapse;font-size:14px}
+.card td{padding:4px 0;border-top:1px solid var(--line)}
+.card td:last-child{text-align:right;font-family:var(--font-num)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 16px;border-radius:20px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+.confirm{display:flex;gap:6px;align-items:center;font-size:14px}
+
+/* vehicle planner */
+.fleet{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.fleet-head{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.fleet-head h2{margin:0;font-size:16px;flex:1 1 auto}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{font:inherit;font-weight:700;border:0;background:var(--surface-2);color:var(--muted);padding:6px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--steel);color:var(--steel-fg)}
+.cap{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted)}
+.cap input{width:80px;font-family:var(--font-num);font-size:15px;text-align:right;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--fg)}
+.verdict{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.verdict b{font-size:22px}
+.pill{font-size:12.5px;font-weight:700;padding:2px 10px;border-radius:20px;border:1px solid currentColor}
+.pill.ok{color:var(--ok)}.pill.over{color:var(--accent)}
+.verdict .muted{color:var(--muted);font-size:14px}
+.trucks{display:grid;gap:8px}
+.truck{display:grid;grid-template-columns:56px minmax(0,1fr) 150px;gap:10px;align-items:center;font-size:14px}
+.truck .lbl{color:var(--muted)}
+.meter{height:12px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--steel)}
+.truck.full .meter i{background:var(--accent)}
+.truck .val{text-align:right;font-family:var(--font-num)}
+.fleet .hint{margin:0;font-size:13px;color:var(--muted)}
+@media (max-width:640px){.truck{grid-template-columns:44px minmax(0,1fr);}.truck .val{grid-column:2;text-align:left}}
+
+@media (max-width:640px){
+  .row{grid-template-columns:minmax(0,1fr) 116px;grid-template-areas:"name qty" "unit sub";row-gap:2px}
+  .row .no{display:none}
+  .row .name{grid-area:name}.row .qty{grid-area:qty}.row .unit{grid-area:unit;text-align:left}.row .sub{grid-area:sub}
+  .head{display:none}
+  .tot b{font-size:20px}.tot.big b{font-size:26px}
+  .brand h1{font-size:17px}
+}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><h1>架材重量試算</h1><span>單重 × 數量，輸入即時計算</span></div>
+    <div class="totals">
+      <div class="tot"><small id="tTruckLbl">板車</small><b id="tTrucks">0<i>台</i></b></div>
+      <div class="tot"><small>總數</small><b id="tCount">0<i>支</i></b></div>
+      <div class="tot"><small>重型</small><b id="tHeavy">0<i>kg</i></b></div>
+      <div class="tot"><small>輕型</small><b id="tLight">0<i>kg</i></b></div>
+      <div class="tot big"><small id="tTonLbl">總重 · 0.000 噸</small><b id="tAll">0<i>kg</i></b></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="ticket" aria-label="出貨資料">
+    <div class="field"><label for="fDate">日期</label><input id="fDate" type="date"></div>
+    <div class="field"><label for="fCust">客戶名稱</label><input id="fCust" placeholder="例：仕億"></div>
+    <div class="field"><label for="fContract">合約編號</label><input id="fContract"></div>
+    <div class="field"><label for="fTrip">車次</label><input id="fTrip" inputmode="numeric"></div>
+  </section>
+
+  <section class="fleet" aria-label="車輛試算">
+    <div class="fleet-head">
+      <h2>車輛試算</h2>
+      <div class="seg" role="group" aria-label="預計車種">
+        <button type="button" data-truck="板車" aria-pressed="true">板車</button>
+        <button type="button" data-truck="吊車" aria-pressed="false">吊車</button>
+      </div>
+      <label class="cap" for="fCap">每車載重上限 <input id="fCap" type="number" min="0" step="0.5" inputmode="decimal"> 噸</label>
+    </div>
+    <div class="verdict" id="verdict"></div>
+    <div class="trucks" id="trucks"></div>
+    <p class="hint">依總重平均分配試算，實際裝載仍需依材料長度與堆疊方式調整。</p>
+  </section>
+
+  <div class="bar">
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-heavy" data-k="heavy" aria-selected="true">重型 <span class="num" id="cHeavy"></span></button>
+      <button role="tab" id="tab-light" data-k="light" aria-selected="false">輕型 <span class="num" id="cLight"></span></button>
+    </div>
+    <input id="q" class="search" type="search" placeholder="搜尋品名或規格，例：橫桿 1.8">
+    <label class="chk"><input type="checkbox" id="onlyFilled"> 只看已填</label>
+    <button class="btn" id="copyBtn">複製清單</button>
+    <span id="clearWrap"><button class="btn warn" id="clearBtn">全部清除</button></span>
+  </div>
+
+  <div class="list" id="list" role="tabpanel"></div>
+
+  <section class="notes">
+    <div class="card">
+      <h2>本單明細</h2>
+      <table id="summary"></table>
+    </div>
+    <div class="card">
+      <h2>包裝數量參考</h2>
+      <ul>
+        <li>斜桿：300 支／格</li><li>橫桿：250 支／格</li><li>0.6m 橫桿：250 支／箱</li>
+        <li>0.9m 橫桿：350 支／格</li><li>主架：100 支／格</li><li>0.2m、0.25m：500 支／格</li>
+        <li>0.5m：300 支／格</li><li>蜂巢鋼：30 支／梱</li><li>Top Beam：40 支／梱</li>
+      </ul>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const DATA={"heavy":[["1","平主架","φ60.2mm 1.0m",6],["2","平主架","φ60.2mm 1.5m",9],["3","平主架","φ60.2mm 2.0m",12],["4","平主架","φ60.2mm 3.0m",18],["5","主架","φ60.2mm 1.0m",7],["6","主架","φ60.2mm 1.5m",10],["7","主架","φ60.2mm 2.0m",13],["8","主架","φ60.2mm 3.0m",19],["9","標準基座","0.2米 60.2mm 系統使用",2.3],["10","輔助桿","0.25米",2.4],["11","輔助桿","0.5米",3.5],["12","橫桿","φ48.2mm 0.6m",2.5],["13","橫桿","φ48.2mm 0.9m",3.6],["14","橫桿","φ48.2mm 1.2m",4],["15","橫桿","φ48.2mm 1.5m",5.5],["16","橫桿","φ48.2mm 1.8m",6.5],["17","橫桿","φ48.2mm 2.4m",8.5],["18","斜桿","0.6ML*1.0MH",5],["19","斜桿","0.9ML*1.0MH",5.5],["20","斜桿","1.5ML*1.0MH",6.6],["21","斜桿","1.8ML*1.0MH",7.2],["22","斜桿","0.6ML*1.5MH",6],["23","斜桿","0.9ML*1.5MH",6.5],["24","斜桿","1.2ML*1.5MH",7],["25","斜桿","1.5ML*1.5MH",7.5],["26","斜桿","1.8ML*1.5MH",8],["27","斜桿","2.4ML*1.5MH",10],["28","定位桿","1.5*1.5米",7],["29","定位桿","1.8*1.5米",8],["30","定位桿","1.8*1.8米",8.5],["31","定位桿","2.4*1.5米",9.1],["32","下調整座","φ48.2mm 600 mmL熱浸",5],["33","U型調整座","φ48.2mm 600 mmL熱浸",6],["34","調整座","φ48.2mm 600 mmL",5],["35","調整座","φ48.2mm 750 mmL",6],["36","U型調整座","φ48.2mm 600 mmL",6.5],["37","U型調整座","φ48.2mm 750 mmL",7.1],["38","活動調整座","φ48.2mm 600 mmL",7.5],["39","U型活動座","φ48.2mm 600 mmL",8.8],["40","調整輪","φ48.2mm 600 mmL",17.7],["41","工作爬梯","H1.5m*W2.4m",53.2],["42","扶手","",6.4],["43","樓梯鎖扣","",0.8],["44","工作爬梯","W:1.8m × H:1.5m",28],["45","雙C樑架","槽鋼75x40x1650mm含套管",25],["46","SL-45A","4\"",0.1],["47","小C型夾","",0.6],["48","C型夾","",0.6],["49","鱷魚夾","(中)3cm",0.88],["50","SL-36","2 3/4\"〈哲管〉",0.054],["51","活動緊結","(CP-08S) 11/2\"*11/2\" 通用",0.63],["52","活動緊結","(CP-08S) 11/2\"*2\"",0.67],["53","固定緊結","(CP-08S) 11/2\"*11/2\"",0.623],["54","固定緊結","(CP-08S) 2\"*11/2\"",0.732],["55","小型鋼","H150*B75* 3ml",44.1],["56","小型鋼","H150*B75* 6ml",88.2],["57","加勁板(片)","",6.3],["58","H型鋼","H200*B100*1ml",21],["59","H型鋼","H200*B100*1.5ml",31.5],["60","H型鋼","H200*B100*2ml",42],["61","H型鋼","H200*B100*2.5ml",55],["62","H型鋼","H200*B100*3ml",63],["63","H型鋼","H200*B100*4ml",84],["64","H型鋼","H200*B100*4.5ml",99],["65","H型鋼","H200*B100*5ml",105],["66","H型鋼","H200*B100*6ml",132],["67","H型鋼","H200*B100*7ml",154],["68","H型鋼","H200*B100*9ml",189],["69","H型鋼","H200*B100*10ml",210],["70","H型鋼","H200*B100*11ml",231],["71","H型鋼","H200*B100*12ml",252],["75","爬梯","W:1.8m × H:2.0m(2691L)",25],["76","三角托架","0.762m",6.69],["82","連接棒","φ60.2mm",1.1],["83","回貨架","主架用(片)",26.6],["84","回貨架","橫.斜桿用(片)",25.4],["85","彈簧銷","",null],["86","腳踏板","265*1500",8.02],["87","腳踏板","265*1800",9.36],["88","腳踏板","285x2400",16.5],["89","腳踏板","215x400",13.2],["90","腳踏板","550*1500",15.62],["91","腳踏板","550*1800",18.24],["92","中鱷魚夾","開口4.0cm",0.86],["93","大鱷魚夾","開口5.7cm",1.4],["98","蜂巢鋼","200x161mmx0.15m 藍漆",6.68],["99","蜂巢鋼","200x161mmx0.3m 熱浸",8.74],["100","蜂巢鋼","200x161mmx0.45m 熱浸",10.86],["101","蜂巢鋼","200x161mmx0.6m 熱浸",13.36],["102","蜂巢鋼","200x161mmx0.9m 熱浸",18.18],["103","蜂巢鋼","200x161mmx1.2m 熱浸",22.98],["104","蜂巢鋼","200x161mmx1.5m 熱浸",27.63],["105","蜂巢鋼","200x161mmx1.8m 熱浸",32.78],["106","蜂巢鋼","200x161mmx2.1m 熱浸",37.58],["107","蜂巢鋼","200x161mmx2.4m 熱浸",42.7],["108","蜂巢鋼","200x161mmx2.7m 熱浸",47.3],["109","蜂巢鋼","200x161mmx3.0m 熱浸",52.3],["110","Top Beam","1.2M",6.6],["111","Top Beam","1.5M",8.3],["112","Top Beam","1.8M",10],["113","Top Beam","2.1M",11.5],["114","Top Beam","2.4M",13.2],["115","Top Beam","2.7M",15],["116","Top Beam","3.0M",16.5],["117","Top Beam","3.6M",20],["118","TB固定器","H",0.27],["119","TB固定器","蜂",0.27],["120","安全網","",null]],"light":[["4","(輕)平主架","φ48.6 × t:2.5mm 1.0m",3.73],["5","(輕)平主架","φ48.6 × t:2.5mm 1.5m",5.59],["6","(輕)平主架","φ48.6 × t:2.5mm 2.0m",7.51],["7","(輕)平主架","φ48.6 × t:2.5mm 3m",11.3],["8","(輕)主架","φ48.6 × t:2.5mm 0.45m",2.6],["9","(輕)主架","φ48.6 × t:2.5mm 0.9m",4.2],["10","(輕)主架","φ48.6 × t:2.5mm 1.0m",4.3],["12","(輕)主架","φ48.6 × t:2.5mm 1.5m",6.07],["13","(輕)主架","φ48.6 × t:2.5mm 1.8m",7.5],["14","(輕)主架","φ48.6 × t:2.5mm 2.0m",8.42],["16","(輕)主架","φ48.6 × t:2.5mm 3m",12.1],["17","輔助桿","0.35M",2],["19","(輕)橫桿","φ42.7 × t:2.3mm 0.6m",1.96],["21","(輕)橫桿","φ42.7 × t:2.3mm 0.719m",2.3],["22","(輕)橫桿","φ42.7 × t:2.3mm 0.762m",2.32],["23","(輕)橫桿","φ42.7 × t:2.3mm 0.779m",2.45],["24","(輕)橫桿","φ42.7 × t:2.3mm 0.9m",2.72],["27","(輕)橫桿","φ42.7 × t:2.3mm 1.2m",3.46],["32","(輕)橫桿","φ42.7 × t:2.3mm 1.5m",4.15],["33","(輕)橫桿","φ42.7 × t:2.3mm 1.8m",4.8],["34","(輕)橫桿","φ48.6 × t:2.5mm 1.8m",6.2],["35","(輕)橫桿","φ42.6 × t:2.3mm 1.829m",4.9],["36","(輕)橫桿","φ48.6 × t:2.5mm 1.829m",6.3],["37","(輕)橫桿","φ42.7 × t:2.3mm 2.4m",6.22],["38","(輕)橫桿","φ42.6 × t:2.3mm 3.0m",5.54],["41","(輕)斜桿","φ42.7 t:2.3mm 0.9 × 1.5m",4.98],["42","(輕)斜桿","φ42.7 t:2.3mm 0.9 × 2.0m",6.1],["43","(輕)斜桿","φ42.7 t:2.3mm 1.2 × 2.0m",6.54],["44","(輕)斜桿","φ42.7 t:2.3mm 1.5 × 2.0m",7.04],["45","(輕)斜桿","φ42.7 t:2.3mm 1.2 × 1.8m",6.02],["47","(輕)斜桿","φ42.7 t:2.3mm 1.8 × 1.8m",6.9],["48","(輕)斜桿","φ42.7 t:2.3mm 1.829×1.8m",7],["49","(輕)斜桿","φ42.7 t:2.3mm 1.8 × 2.0m",7.5],["50","(輕)斜桿","φ42.7 t:2.3mm 1.829 × 2.0m",7.15],["51","定位桿","1.8 × 1.2m",5.32],["52","定位桿","1.8 × 1.8m",6.8],["53","定位桿","1.395x1.829m",6.02],["54","定位桿","1.829x1.829m",6.67],["55","腳止板","1.2m",1.6],["56","腳止板","1.8/1.829m",2.92],["57","貨架","",31.5],["58","貨架","加高加橫桿",36.32],["59","貨架","盤座",0.45],["60","三角托架","0.45m",5],["61","三角托架","0.6m",5.4],["62","三角托架","0.692m",5.69],["63","三角托架","0.7m",6.18],["64","三角托架","0.762m",6.69],["65","三角托架","0.779m",6.8],["66","三角托架","1.129m",7.93],["67","三角托架","1.2m",8.5],["68","三角托架","1.24m",8.65],["69","三角托架","1.395m",9.3],["70","三角側架","0.92m",7],["71","下調整座","φ38.5×300mml(HN-16HS)熱浸",2.5],["72","下調整座","φ38.5×600mml(HN-16HS)熱浸",4],["73","U型調整座","φ38.5×600mml(HN-16HS)熱浸",5],["74","工作爬梯","H:1.0m ×W:1.8m",14.79],["75","扶手","H:1.0m ×W:1.8m",4.77],["76","工作爬梯","W:1.8m × H:1.5m",28],["77","工作爬梯","W:1.8m × H:1.8m",22.64],["78","工作爬梯","W:1.829m × H:1.8m",22.6],["79","工作爬梯","W:1.829m × H:2.0m",23.5],["80","工作爬梯","W:1.8m × H:2.0m(特製)",12],["81","爬梯","W:1.8m × H:2.0m(方管)",31.2],["82","爬梯","W:1.8m × H:2.0m(2691L)",25],["83","扶手","W:1.8m × H:2.0m",5.36],["84","活動踏板","200 × 470mm",1.92],["85","迴轉平台","",14.2],["86","踏板","265 × 1200mm",7.317],["87","踏板","265 × 1500mm",8.2],["87","踏板","265 × 1800mm",9.36],["88","踏板","550 × 1500mm",15.7],["88","踏板","550 × 1800mm",18.24],["89","可掀式踏板","W:530 × 1439mm",14.75],["90","平面調整座","φ1-1/4\"x600mm板5.5t 組HN-11Bx2 電",3.9],["91","煞車輪","SC-06 8\" 軸心φ40×100mm孔距:50mm",4.38],["92","三角斜撐架","主桿+固定桿+調整桿",11.8],["93","扣環","6mm熱浸",0.05],["94","G型插銷","直徑9mm熱浸",0.12],["95","哲管","SL-37S",0.03],["96","哲管","SL-45",0.06],["97","C型夾","",26],["98","C型緊結","",1.01],["99","CP-08S","",0.62]]};
+
+// items: key = sheet + row index (NO. repeats in 輕型)
+const ITEMS={};
+for(const k of ["heavy","light"]) ITEMS[k]=DATA[k].map((r,i)=>({id:k+":"+i,no:r[0],name:r[1],spec:r[2],w:r[3]}));
+const LABEL={heavy:"重型",light:"輕型"};
+const STORE="weight-calc-v1";
+let S={tab:"heavy",qty:{},uw:{},f:{}};
+try{const s=JSON.parse(localStorage.getItem(STORE)||"null");if(s)S=Object.assign(S,s)}catch(e){}
+const save=()=>{try{localStorage.setItem(STORE,JSON.stringify(S))}catch(e){}};
+
+const $=id=>document.getElementById(id);
+const fmt=(n,d=2)=>Number(n).toLocaleString("zh-TW",{minimumFractionDigits:0,maximumFractionDigits:d});
+const unitW=it=>it.w!=null?it.w:(parseFloat(S.uw[it.id])||0);
+const qtyOf=it=>parseFloat(S.qty[it.id])||0;
+const subOf=it=>Math.round(unitW(it)*qtyOf(it)*1000)/1000;
+const grpKey=n=>n.replace(/^\(輕\)/,"").trim();
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function totals(k){let w=0,c=0;for(const it of ITEMS[k]){w+=subOf(it);c+=qtyOf(it)}return{w:Math.round(w*1000)/1000,c}}
+
+function renderList(){
+  const q=$("q").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const only=$("onlyFilled").checked;
+  const items=ITEMS[S.tab].filter(it=>{
+    if(only&&!qtyOf(it))return false;
+    const hay=(it.name+" "+it.spec+" "+it.no).toLowerCase();
+    return q.every(t=>hay.includes(t));
+  });
+  let html='<div class="row head"><div>NO.</div><div>品名／規格</div><div>單重 kg</div><div>數量</div><div>支重 kg</div></div>';
+  let last=null;
+  const groups={};for(const it of items){const g=grpKey(it.name);groups[g]=(groups[g]||0)+subOf(it)}
+  for(const it of items){
+    const g=grpKey(it.name);
+    if(g!==last){html+=`<div class="grp"><span>${esc(g)}</span><span class="num" data-g="${esc(g)}">${groups[g]?fmt(groups[g])+" kg":""}</span></div>`;last=g}
+    const q=S.qty[it.id]??"";const sub=subOf(it);
+    const unit=it.w!=null?fmt(it.w,3):`<input type="number" step="any" min="0" placeholder="待填" aria-label="${esc(it.name)} 單重" data-uw="${it.id}" id="uw-${it.id.replace(':','-')}" value="${esc(S.uw[it.id]??"")}">`;
+    html+=`<div class="row${qtyOf(it)?" on":""}" data-row="${it.id}">
+      <div class="no">${esc(it.no)}</div>
+      <div class="name"><b>${esc(it.name)}</b><span>${esc(it.spec)||"—"}</span></div>
+      <div class="unit">${unit}</div>
+      <div class="qty"><button data-step="-1" data-id="${it.id}" aria-label="減少">−</button><input type="number" min="0" step="1" inputmode="numeric" placeholder="0" aria-label="${esc(it.name+" "+it.spec)} 數量" id="q-${it.id.replace(':','-')}" data-q="${it.id}" value="${esc(q)}"><button data-step="1" data-id="${it.id}" aria-label="增加">+</button></div>
+      <div class="sub${sub?"":" zero"}" data-sub="${it.id}">${sub?fmt(sub):"0"}</div>
+    </div>`;
+  }
+  if(!items.length)html+=`<div class="empty">${only?"這一頁還沒有填數量的品項。":"找不到符合的品項，試試別的關鍵字。"}</div>`;
+  $("list").innerHTML=html;
+}
+
+function updateRow(id){
+  const k=id.split(":")[0];const it=ITEMS[k].find(x=>x.id===id);
+  const row=document.querySelector(`[data-row="${id}"]`);
+  if(row){const s=subOf(it);row.classList.toggle("on",!!qtyOf(it));const c=row.querySelector("[data-sub]");c.textContent=s?fmt(s):"0";c.classList.toggle("zero",!s)}
+  // group subtotal
+  const g=grpKey(it.name);const el=[...document.querySelectorAll("[data-g]")].find(e=>e.dataset.g===g);
+  if(el){const t=ITEMS[k].filter(x=>grpKey(x.name)===g).reduce((a,x)=>a+subOf(x),0);el.textContent=t?fmt(t)+" kg":""}
+}
+
+function renderTotals(){
+  const h=totals("heavy"),l=totals("light"),all=h.w+l.w;
+  $("tHeavy").innerHTML=fmt(h.w)+"<i>kg</i>";$("tLight").innerHTML=fmt(l.w)+"<i>kg</i>";
+  $("tAll").innerHTML=fmt(all)+"<i>kg</i>";$("tTonLbl").textContent="總重 · "+(all/1000).toFixed(3)+" 噸";
+  $("tCount").innerHTML=fmt(h.c+l.c,0)+"<i>支</i>";
+  $("cHeavy").textContent=h.w?fmt(h.w,0)+"kg":"";$("cLight").textContent=l.w?fmt(l.w,0)+"kg":"";
+  let rows="";
+  for(const k of ["heavy","light"])for(const it of ITEMS[k])if(qtyOf(it))rows+=`<tr><td>${LABEL[k]}｜${esc(it.name)} ${esc(it.spec)} × ${fmt(qtyOf(it),0)}</td><td>${fmt(subOf(it))} kg</td></tr>`;
+  $("summary").innerHTML=rows?rows+`<tr><td><b>合計</b></td><td><b>${fmt(all)} kg</b></td></tr>`:'<tr><td style="color:var(--muted);border:0">在上方輸入數量後，品項會列在這裡。</td><td style="border:0"></td></tr>';
+  renderFleet(all);
+}
+
+// ---- vehicle planner ----
+const DEFAULT_CAP={"板車":22,"吊車":""};
+S.cap=Object.assign({},DEFAULT_CAP,S.cap||{});
+const truckType=()=>S.f.truck==="吊車"?"吊車":"板車";
+function fleetPlan(totalKg){
+  const capT=parseFloat(S.cap[truckType()]);
+  if(!(capT>0))return{capT:null};
+  const capKg=capT*1000;
+  const n=totalKg>0?Math.ceil(totalKg/capKg-1e-9):0;
+  const loads=[];let left=totalKg;
+  for(let i=0;i<n;i++){const l=Math.min(capKg,left);loads.push(l);left-=l}
+  return{capT,capKg,n,loads,spare:n?n*capKg-totalKg:0,avg:n?totalKg/n:0};
+}
+function renderFleet(all){
+  const t=truckType();
+  document.querySelectorAll("[data-truck]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.truck===t));
+  const capEl=$("fCap");if(document.activeElement!==capEl)capEl.value=S.cap[t];
+  capEl.placeholder=t==="吊車"?"請輸入":"";
+  const p=fleetPlan(all);
+  $("tTruckLbl").textContent=t;
+  if(!p.capT){
+    $("tTrucks").innerHTML="—";
+    $("verdict").innerHTML=`<span class="muted">請先填入${t}每車載重上限（噸），即可算出需要幾台車。</span>`;
+    $("trucks").innerHTML="";return;
+  }
+  $("tTrucks").innerHTML=p.n+"<i>台</i>";
+  if(!p.n){$("verdict").innerHTML='<span class="muted">輸入數量後會算出需要的車數。</span>';$("trucks").innerHTML="";return}
+  const over=p.n>1;
+  $("verdict").innerHTML=`<b>需要 ${p.n} 台${t}</b>
+    <span class="pill ${over?"over":"ok"}">${over?`超過單車 ${fmt(p.capT)} 噸`:`未超過 ${fmt(p.capT)} 噸`}</span>
+    <span class="muted">${over?`平均每車 ${(p.avg/1000).toFixed(3)} 噸，`:""}最後一台還可裝 <span class="num">${fmt(p.spare,0)}</span> kg</span>`;
+  $("trucks").innerHTML=p.loads.map((l,i)=>{
+    const pct=Math.min(100,l/p.capKg*100);
+    return `<div class="truck${pct>=99.99?" full":""}"><span class="lbl">第 ${i+1} 車</span><div class="meter" role="img" aria-label="第 ${i+1} 車裝載 ${pct.toFixed(0)}%"><i style="width:${pct}%"></i></div><span class="val">${(l/1000).toFixed(3)} / ${fmt(p.capT)} 噸</span></div>`;
+  }).join("");
+}
+document.querySelectorAll("[data-truck]").forEach(b=>b.addEventListener("click",()=>{S.f.truck=b.dataset.truck;save();renderTotals()}));
+$("fCap").addEventListener("input",()=>{S.cap[truckType()]=$("fCap").value;save();renderTotals()});
+
+function setQty(id,v){
+  v=String(v).trim();
+  if(v===""||+v===0)delete S.qty[id];else S.qty[id]=Math.max(0,+v);
+  save();updateRow(id);renderTotals();
+}
+
+$("list").addEventListener("input",e=>{
+  const t=e.target;
+  if(t.dataset.q)setQty(t.dataset.q,t.value);
+  if(t.dataset.uw){if(t.value==="")delete S.uw[t.dataset.uw];else S.uw[t.dataset.uw]=t.value;save();updateRow(t.dataset.uw);renderTotals()}
+});
+$("list").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-step]");if(!b)return;
+  const id=b.dataset.id;const n=Math.max(0,(parseFloat(S.qty[id])||0)+ +b.dataset.step);
+  const inp=document.querySelector(`[data-q="${id}"]`);if(inp)inp.value=n||"";setQty(id,n);
+});
+document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>{
+  S.tab=b.dataset.k;save();document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));renderList();
+}));
+$("q").addEventListener("input",renderList);
+$("onlyFilled").addEventListener("change",renderList);
+
+// ticket fields
+const FIELDS={fDate:"date",fCust:"cust",fContract:"contract",fTrip:"trip"};
+for(const [id,k] of Object.entries(FIELDS)){
+  const el=$(id);el.value=S.f[k]??(k==="date"?new Date().toISOString().slice(0,10):"");
+  el.addEventListener("input",()=>{S.f[k]=el.value;save()});
+}
+
+// clear with inline confirm
+function bindClear(){
+  $("clearBtn").addEventListener("click",()=>{
+    $("clearWrap").innerHTML='<span class="confirm">清除所有數量？<button class="btn warn" id="yesClr">清除</button><button class="btn" id="noClr">取消</button></span>';
+    $("yesClr").onclick=()=>{S.qty={};save();renderList();renderTotals();resetClear();toast("已清除所有數量")};
+    $("noClr").onclick=resetClear;
+  });
+}
+function resetClear(){$("clearWrap").innerHTML='<button class="btn warn" id="clearBtn">全部清除</button>';bindClear()}
+bindClear();
+
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),1800)}
+
+$("copyBtn").addEventListener("click",()=>{
+  const f=S.f;const h=totals("heavy"),l=totals("light");
+  let txt=`日期：${$("fDate").value}　客戶：${f.cust||""}　合約編號：${f.contract||""}　車次：${f.trip||""}　車種：${truckType()}\n`;
+  for(const k of ["heavy","light"]){
+    const rows=ITEMS[k].filter(qtyOf);if(!rows.length)continue;
+    txt+=`\n【${LABEL[k]}】\n`;
+    for(const it of rows)txt+=`${it.name} ${it.spec}　${fmt(unitW(it),3)}kg × ${fmt(qtyOf(it),0)} = ${fmt(subOf(it))} kg\n`;
+    txt+=`小計：${fmt(totals(k).w)} kg\n`;
+  }
+  txt+=`\n總數：${fmt(h.c+l.c,0)}　總重：${fmt(h.w+l.w)} kg（${((h.w+l.w)/1000).toFixed(3)} 噸）`;
+  const p=fleetPlan(h.w+l.w);
+  if(p.capT&&p.n)txt+=`\n車輛：${truckType()} ${p.n} 台（每車上限 ${fmt(p.capT)} 噸）\n`+p.loads.map((x,i)=>`　第 ${i+1} 車：${(x/1000).toFixed(3)} 噸`).join("\n");
+  navigator.clipboard.writeText(txt).then(()=>toast("清單已複製")).catch(()=>{
+    const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();
+    try{document.execCommand("copy");toast("清單已複製")}catch(e){toast("無法複製，請手動選取")}ta.remove();
+  });
+});
+
+// first visit: load a sample order so the page opens in a working state
+let hadSaved=false;try{hadSaved=localStorage.getItem(STORE)!==null}catch(e){}
+if(!hadSaved)Object.assign(S.qty,{"heavy:3":56,"heavy:4":32,"heavy:14":20,"heavy:24":228,"heavy:31":206});
+document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected",x.dataset.k===S.tab));
+renderList();renderTotals();
+</script>
+</body>
+</html>
