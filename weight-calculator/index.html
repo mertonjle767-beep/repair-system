@@ -180,7 +180,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
       <button role="tab" id="tab-heavy" data-k="heavy" aria-selected="true">重型 <span class="num" id="cHeavy"></span></button>
       <button role="tab" id="tab-light" data-k="light" aria-selected="false">輕型 <span class="num" id="cLight"></span></button>
     </div>
-    <input id="q" class="search" type="search" placeholder="搜尋品名或規格，例：橫桿 1.8">
+    <input id="q" class="search" type="search" placeholder="搜尋品名或規格，例：橫1.8">
     <label class="chk"><input type="checkbox" id="onlyFilled"> 只看已填</label>
     <button class="btn" id="copyBtn">複製清單</button>
     <span id="clearWrap"><button class="btn warn" id="clearBtn">全部清除</button></span>
@@ -233,12 +233,14 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 function totals(k){let w=0,c=0;for(const it of ITEMS[k]){w+=subOf(it);c+=qtyOf(it)}return{w:Math.round(w*1000)/1000,c}}
 
 function renderList(){
-  const q=$("q").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  // 中文與數字／英文自動拆開分別比對，例如「橫1.8」= 含「橫」且含「1.8」
+  const q=($("q").value.trim().toLowerCase().match(/[\u3400-\u9fff\uf900-\ufaff]+|[^\s\u3400-\u9fff\uf900-\ufaff]+/g)||[]);
   const only=$("onlyFilled").checked;
   const items=ITEMS[S.tab].filter(it=>{
     if(only&&!qtyOf(it))return false;
-    const hay=(it.name+" "+it.spec+" "+it.no).toLowerCase();
-    return q.every(t=>hay.includes(t));
+    const hay=(it.name+" "+it.spec).toLowerCase();
+    // 數字要從數字開頭比對：「3」找得到 3.0m，不會找到 60.3；輸入完整 NO. 也可以
+    return q.every(t=>/^[\d.]/.test(t)?new RegExp("(^|[^\\d.])"+t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).test(hay)||t===String(it.no).toLowerCase():hay.includes(t));
   });
   let html='<div class="row head"><div>NO.</div><div>品名／規格</div><div>單重 kg</div><div>數量</div><div>支重 kg</div></div>';
   let last=null;
