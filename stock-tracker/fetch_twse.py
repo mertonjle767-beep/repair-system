@@ -193,14 +193,16 @@ def row_name(code, row, i_name, names) -> str:
 
 
 def fetch_market_day(day: dt.date, fetch=fetch_json) -> list[dict]:
-    """STOCK_DAY_ALL：查詢日全部上市股票與 ETF 的收盤價（一次請求，供網頁自由輸入代號查詢）。"""
-    payload = fetch("afterTrading/STOCK_DAY_ALL", date=day.strftime("%Y%m%d"))
+    """MI_INDEX（ALLBUT0999）：查詢日全部上市股票與 ETF 的收盤價（不含權證，一次請求，供網頁自由輸入代號查詢）。"""
+    payload = fetch("afterTrading/MI_INDEX", date=day.strftime("%Y%m%d"), type="ALLBUT0999")
     reported = str(payload.get("date") or "")
     if reported and reported != day.strftime("%Y%m%d"):
         return []  # 不是查詢當天（休市或尚未收盤）
     rows = []
     for fields, data in tables(payload):
-        i_code = column(fields, "證券代號", "代號")
+        i_code = column(fields, "證券代號", required=False)
+        if i_code is None:  # MI_INDEX 另含大盤統計等表格，略過
+            continue
         i_name = column(fields, "證券名稱", "名稱")
         i_close = column(fields, "收盤價")
         i_sign = column(fields, "漲跌(+/-)", required=False)
@@ -373,7 +375,7 @@ def build_summary(taiex, prices, dividends, tracked, today: dt.date, recent_days
     return {
         "查詢日": day,
         "更新時間": dt.datetime.now(TW_TZ).isoformat(timespec="seconds"),
-        "資料來源": "臺灣證券交易所 www.twse.com.tw（FMTQIK、MI_INDEX、STOCK_DAY、STOCK_DAY_ALL、TWT49U、TWT48U）",
+        "資料來源": "臺灣證券交易所 www.twse.com.tw（FMTQIK、MI_INDEX、STOCK_DAY、TWT49U、TWT48U）",
         "加權指數": latest_taiex,
         "追蹤標的": items,
         "近期收盤": recent,
@@ -423,6 +425,13 @@ def update(today: dt.date, month_count: int, fetch=fetch_json, data_dir: Path = 
         start = end + dt.timedelta(days=1)
     new_divs += attempt("除權除息預告", fetch_announced_dividends, None)
     new_market = attempt(f"全市場收盤 {today}", fetch_market_day, today)
+    if not new_market and not read_csv(data_dir / "market_prices.csv"):
+        # 第一次執行且查詢日沒有資料時，往前找最近的交易日
+        for back in range(1, 8):
+            day = today - dt.timedelta(days=back)
+            new_market = attempt(f"全市場收盤 {day}", fetch_market_day, day)
+            if new_market:
+                break
 
     # 全市場配息另存，追蹤標的再從中挑出並套用 watchlist 名稱
     all_divs = upsert(read_csv(data_dir / "all_dividends.csv"), new_divs, ["除息日", "代號"], keep=keep_dividend)

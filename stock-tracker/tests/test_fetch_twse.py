@@ -26,13 +26,6 @@ FIXTURES = {
                       ["發行量加權股價指數", "21,050.00", "<p style='color:green'>-</p>", "50.00", "-0.24", ""]]},
         ],
     },
-    "afterTrading/STOCK_DAY_ALL": {
-        "stat": "OK", "date": "20261116",
-        "fields": ["證券代號", "證券名稱", "成交股數", "成交金額", "開盤價", "最高價", "最低價", "收盤價", "漲跌價差", "成交筆數"],
-        "data": [["0050", "元大台灣50", "1", "1", "1", "1", "1", "181.25", "1.15", "1"],
-                 ["2330", "台積電", "1", "1", "1", "1", "1", "1,000.00", "-15.00", "1"],
-                 ["9998", "停牌示範", "0", "0", "--", "--", "--", "--", "0.00", "0"]],
-    },
     "afterTrading/STOCK_DAY": {
         "stat": "OK",
         "fields": ["日期", "成交股數", "成交金額", "開盤價", "最高價", "最低價", "收盤價", "漲跌價差", "成交筆數"],
@@ -54,7 +47,23 @@ FIXTURES = {
 }
 
 
+MARKET = {
+    "stat": "OK", "date": "20261116",
+    "tables": [
+        {"title": "價格指數", "fields": ["指數", "收盤指數"], "data": [["發行量加權股價指數", "21,050.00"]]},
+        {"title": "每日收盤行情(全部(不含權證、牛熊證))",
+         "fields": ["證券代號", "證券名稱", "成交股數", "成交筆數", "成交金額", "開盤價", "最高價", "最低價", "收盤價",
+                    "漲跌(+/-)", "漲跌價差", "最後揭示買價"],
+         "data": [["0050", "元大台灣50", "1", "1", "1", "1", "1", "1", "181.25", "<p style= color:red>+</p>", "1.15", "1"],
+                  ["2330", "台積電", "1", "1", "1", "1", "1", "1", "1,000.00", "<p style= color:green>-</p>", "15.00", "1"],
+                  ["9998", "停牌示範", "0", "0", "0", "--", "--", "--", "--", " ", "0.00", "--"]]},
+    ],
+}
+
+
 def fake_fetch(path, **params):
+    if path == "afterTrading/MI_INDEX" and params.get("type") == "ALLBUT0999":
+        return MARKET
     return FIXTURES[path]
 
 
@@ -155,12 +164,22 @@ class UpdateTests(unittest.TestCase):
         self.run_update()
 
         def holiday(path, **params):
-            if path == "afterTrading/STOCK_DAY_ALL":
+            if params.get("type") == "ALLBUT0999":
                 return {"stat": "很抱歉，沒有符合條件的資料!"}
             return fake_fetch(path, **params)
         ft.update(dt.date(2026, 11, 17), 1, fetch=holiday, data_dir=self.dir / "data", watchlist=self.watch)
         market = json.loads((self.dir / "data" / "market.json").read_text(encoding="utf-8"))
         self.assertEqual((market["查詢日"], market["收盤日"]), ("2026-11-17", "2026-11-16"))
+        self.assertIn("2330", market["標的"])
+
+    def test_market_first_run_looks_back(self):
+        def weekend(path, **params):
+            if params.get("type") == "ALLBUT0999":
+                return MARKET if params["date"] == "20261116" else {"stat": "很抱歉，沒有符合條件的資料!"}
+            return fake_fetch(path, **params)
+        ft.update(dt.date(2026, 11, 18), 1, fetch=weekend, data_dir=self.dir / "data", watchlist=self.watch)
+        market = json.loads((self.dir / "data" / "market.json").read_text(encoding="utf-8"))
+        self.assertEqual(market["收盤日"], "2026-11-16")
         self.assertIn("2330", market["標的"])
 
     def test_update_is_idempotent(self):
