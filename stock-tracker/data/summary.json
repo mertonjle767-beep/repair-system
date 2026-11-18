@@ -1,7 +1,7 @@
 {
   "查詢日": "2026-11-18",
-  "更新時間": "2026-11-18T13:34:41+08:00",
-  "資料來源": "臺灣證券交易所 www.twse.com.tw（FMTQIK、MI_INDEX、STOCK_DAY、STOCK_DAY_ALL、TWT49U、TWT48U）",
+  "更新時間": "2026-11-18T13:37:10+08:00",
+  "資料來源": "臺灣證券交易所 www.twse.com.tw（FMTQIK、MI_INDEX、STOCK_DAY、TWT49U、TWT48U）",
   "加權指數": {
     "日期": "2026-11-17",
     "收盤指數": "40092.11",
@@ -852,9 +852,7 @@
       "狀態": "已除息"
     }
   ],
-  "錯誤": [
-    "全市場收盤 2026-11-18：讀取失敗：https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY_ALL?date=20261118&response=json（Expecting value: line 1 column 1 (char 0)）"
-  ],
+  "錯誤": [],
   "警告": [],
-  "請求數": 17
+  "請求數": 18
 }
