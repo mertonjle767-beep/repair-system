@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <!-- 支撐架：兩支立柱、三層橫桿、斜撐、頂部 U 型頂托與底部調整座 -->
+  <rect width="180" height="180" rx="36" fill="#2f4a66"/>
+  <g stroke="#ffb15c" stroke-linecap="round" fill="none">
+    <!-- 頂部 U 型頂托 -->
+    <path d="M44 34v10h20V34M116 34v10h20V34" stroke-width="7" stroke-linejoin="round"/>
+    <!-- 立柱 -->
+    <path d="M54 44v94M126 44v94" stroke-width="11"/>
+    <!-- 橫桿 -->
+    <path d="M54 56h72M54 92h72M54 128h72" stroke="#ffffff" stroke-width="8"/>
+    <!-- 斜撐 -->
+    <path d="M58 88l64-28M58 124l64-28" stroke="#ffffff" stroke-width="6" opacity=".85"/>
+  </g>
+  <!-- 盤扣接頭 -->
+  <g fill="#ffb15c">
+    <circle cx="54" cy="56" r="8"/><circle cx="126" cy="56" r="8"/>
+    <circle cx="54" cy="92" r="8"/><circle cx="126" cy="92" r="8"/>
+    <circle cx="54" cy="128" r="8"/><circle cx="126" cy="128" r="8"/>
+  </g>
+  <!-- 底部調整座 -->
+  <g stroke="#ffb15c" stroke-linecap="round">
+    <path d="M54 138v10M126 138v10" stroke-width="6"/>
+    <path d="M40 150h28M112 150h28" stroke-width="7"/>
+  </g>
+</svg>
