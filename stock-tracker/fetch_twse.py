@@ -186,23 +186,54 @@ def dividend_type(text: str) -> str:
     return {"息": "除息", "權": "除權", "權息": "除權息"}.get(text, text or "")
 
 
-def fetch_ex_dividends(start: dt.date, end: dt.date, names: dict, fetch=fetch_json) -> list[dict]:
-    """TWT49U：除權除息計算結果表（已實際除息的紀錄）。"""
+def row_name(code, row, i_name, names) -> str:
+    if names and names.get(code):
+        return names[code]
+    return re.sub(r"<[^>]+>", "", str(row[i_name])).strip() if i_name is not None else ""
+
+
+def fetch_market_day(day: dt.date, fetch=fetch_json) -> list[dict]:
+    """STOCK_DAY_ALL：查詢日全部上市股票與 ETF 的收盤價（一次請求，供網頁自由輸入代號查詢）。"""
+    payload = fetch("afterTrading/STOCK_DAY_ALL", date=day.strftime("%Y%m%d"))
+    reported = str(payload.get("date") or "")
+    if reported and reported != day.strftime("%Y%m%d"):
+        return []  # 不是查詢當天（休市或尚未收盤）
+    rows = []
+    for fields, data in tables(payload):
+        i_code = column(fields, "證券代號", "代號")
+        i_name = column(fields, "證券名稱", "名稱")
+        i_close = column(fields, "收盤價")
+        i_sign = column(fields, "漲跌(+/-)", required=False)
+        i_change = column(fields, "漲跌價差", required=False)
+        for row in data:
+            close = parse_number(row[i_close])
+            if not close:
+                continue
+            change = "" if i_change is None else (
+                signed_change(row[i_sign], row[i_change]) if i_sign is not None else parse_number(row[i_change]))
+            rows.append({"日期": day.isoformat(), "代號": str(row[i_code]).strip(),
+                         "名稱": re.sub(r"<[^>]+>", "", str(row[i_name])).strip(), "收盤價": close, "漲跌": change})
+    return rows
+
+
+def fetch_ex_dividends(start: dt.date, end: dt.date, names: dict | None, fetch=fetch_json) -> list[dict]:
+    """TWT49U：除權除息計算結果表（已實際除息的紀錄）。names 為 None 時保留全市場。"""
     payload = fetch("exRight/TWT49U", startDate=start.strftime("%Y%m%d"), endDate=end.strftime("%Y%m%d"))
     rows = []
     for fields, data in tables(payload):
         i_date = column(fields, "資料日期", "日期")
         i_code = column(fields, "股票代號", "代號")
+        i_name = column(fields, "股票名稱", "名稱", required=False)
         i_amount = column(fields, "權值+息值", "權值", "息值")
         i_kind = column(fields, "權/息", required=False)
         i_before = column(fields, "除權息前收盤價", required=False)
         i_ref = column(fields, "除權息參考價", required=False)
         for row in data:
             code = str(row[i_code]).strip()
-            if code not in names:
+            if names is not None and code not in names:
                 continue
             rows.append({
-                "除息日": parse_date(row[i_date]), "代號": code, "名稱": names[code],
+                "除息日": parse_date(row[i_date]), "代號": code, "名稱": row_name(code, row, i_name, names),
                 "類型": dividend_type(row[i_kind]) if i_kind is not None else "",
                 "每股配息": parse_number(row[i_amount]),
                 "除息前收盤價": parse_number(row[i_before]) if i_before is not None else "",
@@ -212,21 +243,22 @@ def fetch_ex_dividends(start: dt.date, end: dt.date, names: dict, fetch=fetch_js
     return rows
 
 
-def fetch_announced_dividends(names: dict, fetch=fetch_json) -> list[dict]:
-    """TWT48U：除權除息預告表（即將除息的標的與現金股利）。"""
+def fetch_announced_dividends(names: dict | None, fetch=fetch_json) -> list[dict]:
+    """TWT48U：除權除息預告表（即將除息的標的與現金股利）。names 為 None 時保留全市場。"""
     payload = fetch("exRight/TWT48U")
     rows = []
     for fields, data in tables(payload):
         i_date = column(fields, "除權除息日期", "日期")
         i_code = column(fields, "股票代號", "代號")
+        i_name = column(fields, "名稱", required=False)
         i_kind = column(fields, "除權息", required=False)
         i_cash = column(fields, "現金股利")
         for row in data:
             code = str(row[i_code]).strip()
-            if code not in names:
+            if names is not None and code not in names:
                 continue
             rows.append({
-                "除息日": parse_date(row[i_date]), "代號": code, "名稱": names[code],
+                "除息日": parse_date(row[i_date]), "代號": code, "名稱": row_name(code, row, i_name, names),
                 "類型": dividend_type(row[i_kind]) if i_kind is not None else "",
                 "每股配息": parse_number(row[i_cash]),
                 "除息前收盤價": "", "除息參考價": "", "狀態": ANNOUNCED,
@@ -282,33 +314,57 @@ def to_float(text):
         return None
 
 
+def summarize(code: str, name: str, latest: dict | None, divs: list[dict], today: dt.date) -> dict:
+    """單一標的：最新收盤、最近／下次除息、近 12 月配息與殖利率。divs 需依除息日排序。"""
+    day, year_ago = today.isoformat(), (today - dt.timedelta(days=365)).isoformat()
+    past = [d for d in divs if d["狀態"] == CONFIRMED and d["除息日"] <= day]
+    upcoming = [d for d in divs if d["除息日"] > day or (d["狀態"] == ANNOUNCED and d["除息日"] == day)]
+    trailing = sum(to_float(d["每股配息"]) or 0 for d in past if d["除息日"] > year_ago)
+    close = to_float(latest["收盤價"]) if latest else None
+    return {
+        "代號": code, "名稱": name,
+        "日期": latest["日期"] if latest else None,
+        "收盤價": latest["收盤價"] if latest else None,
+        "漲跌": latest["漲跌"] if latest else None,
+        "最近除息": past[-1] if past else None,
+        "下次除息": upcoming[0] if upcoming else None,
+        "近12月配息": round(trailing, 4) if past else None,
+        "殖利率": round(trailing / close * 100, 2) if past and close else None,
+    }
+
+
+MARKET_COLUMNS = ["名稱", "收盤日", "收盤價", "漲跌", "最近除息日", "最近配息", "下次除息日", "下次配息",
+                  "近12月配息", "殖利率"]
+
+
+def build_market(market_prices: list[dict], all_dividends: list[dict], today: dt.date) -> dict:
+    """全市場精簡表：{代號: [MARKET_COLUMNS 依序的值]}，給網頁自由輸入代號查詢。"""
+    by_code: dict[str, list[dict]] = {}
+    for d in all_dividends:
+        by_code.setdefault(d["代號"], []).append(d)
+    stocks = {}
+    for p in market_prices:
+        s = summarize(p["代號"], p["名稱"], p, by_code.get(p["代號"], []), today)
+        last, nxt = s["最近除息"] or {}, s["下次除息"] or {}
+        stocks[p["代號"]] = [s["名稱"], s["日期"], s["收盤價"], s["漲跌"], last.get("除息日"), last.get("每股配息"),
+                            nxt.get("除息日"), nxt.get("每股配息") or None, s["近12月配息"], s["殖利率"]]
+    dates = sorted({p["日期"] for p in market_prices})
+    return {"查詢日": today.isoformat(), "收盤日": dates[-1] if dates else None,
+            "更新時間": dt.datetime.now(TW_TZ).isoformat(timespec="seconds"),
+            "欄位": MARKET_COLUMNS, "標的": stocks}
+
+
 def build_summary(taiex, prices, dividends, tracked, today: dt.date, recent_days=20) -> dict:
     day = today.isoformat()
     taiex = [r for r in taiex if r["日期"] <= day]  # 以查詢日為準，不顯示之後的資料
     prices = [r for r in prices if r["日期"] <= day]
     latest_taiex = taiex[-1] if taiex else None
-    year_ago = (today - dt.timedelta(days=365)).isoformat()
     items = []
     for t in tracked:
         code = t["code"]
         own = [p for p in prices if p["代號"] == code]
-        latest = own[-1] if own else None
-        divs = [d for d in dividends if d["代號"] == code]
-        past = [d for d in divs if d["狀態"] == CONFIRMED and d["除息日"] <= today.isoformat()]
-        upcoming = [d for d in divs if d["除息日"] > today.isoformat()
-                    or (d["狀態"] == ANNOUNCED and d["除息日"] == today.isoformat())]
-        trailing = sum(to_float(d["每股配息"]) or 0 for d in past if d["除息日"] > year_ago)
-        close = to_float(latest["收盤價"]) if latest else None
-        items.append({
-            "代號": code, "名稱": t.get("name", ""),
-            "日期": latest["日期"] if latest else None,
-            "收盤價": latest["收盤價"] if latest else None,
-            "漲跌": latest["漲跌"] if latest else None,
-            "最近除息": past[-1] if past else None,
-            "下次除息": upcoming[0] if upcoming else None,
-            "近12月配息": round(trailing, 4) if past else None,
-            "殖利率": round(trailing / close * 100, 2) if past and close else None,
-        })
+        items.append(summarize(code, t.get("name", ""), own[-1] if own else None,
+                               [d for d in dividends if d["代號"] == code], today))
     dates = sorted({r["日期"] for r in taiex} | {r["日期"] for r in prices}, reverse=True)[:recent_days]
     taiex_by_date = {r["日期"]: r for r in taiex}
     price_by_key = {(r["日期"], r["代號"]): r["收盤價"] for r in prices}
@@ -317,7 +373,7 @@ def build_summary(taiex, prices, dividends, tracked, today: dt.date, recent_days
     return {
         "查詢日": day,
         "更新時間": dt.datetime.now(TW_TZ).isoformat(timespec="seconds"),
-        "資料來源": "臺灣證券交易所 www.twse.com.tw（FMTQIK、STOCK_DAY、TWT49U、TWT48U）",
+        "資料來源": "臺灣證券交易所 www.twse.com.tw（FMTQIK、MI_INDEX、STOCK_DAY、STOCK_DAY_ALL、TWT49U、TWT48U）",
         "加權指數": latest_taiex,
         "追蹤標的": items,
         "近期收盤": recent,
@@ -363,9 +419,17 @@ def update(today: dt.date, month_count: int, fetch=fetch_json, data_dir: Path = 
     start = today - dt.timedelta(days=400)  # 近 12 個月配息需要約一年資料，分段查詢
     while start <= today:
         end = min(start + dt.timedelta(days=89), today)
-        new_divs += attempt(f"除息紀錄 {start}~{end}", fetch_ex_dividends, start, end, names)
+        new_divs += attempt(f"除息紀錄 {start}~{end}", fetch_ex_dividends, start, end, None)
         start = end + dt.timedelta(days=1)
-    new_divs += attempt("除權除息預告", fetch_announced_dividends, names)
+    new_divs += attempt("除權除息預告", fetch_announced_dividends, None)
+    new_market = attempt(f"全市場收盤 {today}", fetch_market_day, today)
+
+    # 全市場配息另存，追蹤標的再從中挑出並套用 watchlist 名稱
+    all_divs = upsert(read_csv(data_dir / "all_dividends.csv"), new_divs, ["除息日", "代號"], keep=keep_dividend)
+    all_divs = [d for d in all_divs if d["除息日"] > (today - dt.timedelta(days=400)).isoformat()]
+    new_divs = [dict(d, 名稱=names[d["代號"]] or d["名稱"]) for d in new_divs if d["代號"] in names]
+    # 休市或尚未收盤時沿用上一次的全市場收盤
+    market_prices = new_market or read_csv(data_dir / "market_prices.csv")
 
     taiex = upsert(read_csv(data_dir / "taiex.csv"), new_taiex, ["日期"])
     prices = upsert(read_csv(data_dir / "prices.csv"), new_prices, ["日期", "代號"])
@@ -376,6 +440,11 @@ def update(today: dt.date, month_count: int, fetch=fetch_json, data_dir: Path = 
     write_csv(data_dir / "taiex.csv", TAIEX_FIELDS, taiex)
     write_csv(data_dir / "prices.csv", PRICE_FIELDS, prices)
     write_csv(data_dir / "dividends.csv", DIVIDEND_FIELDS, dividends)
+    write_csv(data_dir / "all_dividends.csv", DIVIDEND_FIELDS, all_divs)
+    write_csv(data_dir / "market_prices.csv", PRICE_FIELDS, market_prices)
+    market = build_market(market_prices, all_divs, today)
+    (data_dir / "market.json").write_text(json.dumps(market, ensure_ascii=False, separators=(",", ":")) + "\n",
+                                          encoding="utf-8")
     summary = build_summary(taiex, prices, dividends, tracked, today)
     summary["錯誤"] = errors
     summary["警告"] = warnings

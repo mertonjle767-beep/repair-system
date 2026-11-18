@@ -26,6 +26,13 @@ FIXTURES = {
                       ["發行量加權股價指數", "21,050.00", "<p style='color:green'>-</p>", "50.00", "-0.24", ""]]},
         ],
     },
+    "afterTrading/STOCK_DAY_ALL": {
+        "stat": "OK", "date": "20261116",
+        "fields": ["證券代號", "證券名稱", "成交股數", "成交金額", "開盤價", "最高價", "最低價", "收盤價", "漲跌價差", "成交筆數"],
+        "data": [["0050", "元大台灣50", "1", "1", "1", "1", "1", "181.25", "1.15", "1"],
+                 ["2330", "台積電", "1", "1", "1", "1", "1", "1,000.00", "-15.00", "1"],
+                 ["9998", "停牌示範", "0", "0", "--", "--", "--", "--", "0.00", "0"]],
+    },
     "afterTrading/STOCK_DAY": {
         "stat": "OK",
         "fields": ["日期", "成交股數", "成交金額", "開盤價", "最高價", "最低價", "收盤價", "漲跌價差", "成交筆數"],
@@ -132,6 +139,29 @@ class UpdateTests(unittest.TestCase):
         self.assertEqual(summary["錯誤"], [])
         self.assertEqual(len(summary["警告"]), 1)
         self.assertIn("9999X", summary["警告"][0])
+
+    def test_market_snapshot_covers_untracked_codes(self):
+        self.run_update()
+        market = json.loads((self.dir / "data" / "market.json").read_text(encoding="utf-8"))
+        cols = market["欄位"]
+        tsmc = dict(zip(cols, market["標的"]["2330"]))
+        self.assertEqual((tsmc["名稱"], tsmc["收盤價"], tsmc["漲跌"]), ("台積電", "1000.0", "-15.0"))
+        self.assertEqual((tsmc["最近除息日"], tsmc["最近配息"]), ("2026-07-16", "5.0"))  # 未追蹤也有配息
+        self.assertEqual(tsmc["殖利率"], 0.5)
+        self.assertNotIn("9998", market["標的"])  # 無收盤價的不列入
+        self.assertEqual(market["收盤日"], "2026-11-16")
+
+    def test_market_snapshot_kept_on_holiday(self):
+        self.run_update()
+
+        def holiday(path, **params):
+            if path == "afterTrading/STOCK_DAY_ALL":
+                return {"stat": "很抱歉，沒有符合條件的資料!"}
+            return fake_fetch(path, **params)
+        ft.update(dt.date(2026, 11, 17), 1, fetch=holiday, data_dir=self.dir / "data", watchlist=self.watch)
+        market = json.loads((self.dir / "data" / "market.json").read_text(encoding="utf-8"))
+        self.assertEqual((market["查詢日"], market["收盤日"]), ("2026-11-17", "2026-11-16"))
+        self.assertIn("2330", market["標的"])
 
     def test_update_is_idempotent(self):
         self.run_update()

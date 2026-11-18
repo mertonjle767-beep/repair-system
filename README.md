@@ -47,6 +47,7 @@
 - 手動更新：`python3 stock-tracker/fetch_twse.py --months 1`（只用 Python 標準函式庫）；加 `--date YYYY-MM-DD` 可查詢指定日期。
 - 收盤價以查詢日為準：加權指數另以 MI_INDEX 抓取查詢當天收盤。若查詢日休市或尚未收盤，頁面顯示前一個交易日並在日期旁標 `*`。Actions 手動執行時也可填「查詢日」。
 - 測試：`python3 -m unittest discover -s stock-tracker/tests`（使用虛構回應，不需連網）。
+- 自訂查詢：排程每天另抓全部上市股票與 ETF 的收盤（STOCK_DAY_ALL）及全市場配息，寫入 `market.json`、`market_prices.csv`、`all_dividends.csv`。頁面「自訂查詢」可輸入任何上市代號或名稱，清單只存在該瀏覽器（localStorage），只有當日收盤與配息，沒有近期走勢；上櫃股票不在範圍內。
 
 ## 東京散策地圖
 
