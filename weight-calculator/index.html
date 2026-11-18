@@ -104,8 +104,9 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .fleet{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:12px}
 .fleet-head{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
 .fleet-head h2{margin:0;font-size:16px;flex:1 1 auto}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-.seg button{font:inherit;font-weight:700;border:0;background:var(--surface-2);color:var(--muted);padding:6px 14px;cursor:pointer}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{font:inherit;font-weight:700;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--muted);padding:6px 12px;cursor:pointer;white-space:nowrap}
+.seg button small{font-family:var(--font-num);font-weight:500;margin-left:4px}
 .seg button[aria-pressed="true"]{background:var(--steel);color:var(--steel-fg)}
 .cap{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted)}
 .cap input{width:80px;font-family:var(--font-num);font-size:15px;text-align:right;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--fg)}
@@ -160,9 +161,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
   <section class="fleet" aria-label="車輛試算">
     <div class="fleet-head">
       <h2>車輛試算</h2>
-      <div class="seg" role="group" aria-label="預計車種">
-        <button type="button" data-truck="板車" aria-pressed="true">板車</button>
-        <button type="button" data-truck="吊車" aria-pressed="false">吊車</button>
+      <div class="seg" role="group" aria-label="預計車種" id="truckSeg">
       </div>
       <label class="cap" for="fCap">每車載重上限 <input id="fCap" type="number" min="0" step="0.5" inputmode="decimal"> 噸</label>
     </div>
@@ -273,11 +272,17 @@ function renderTotals(){
 }
 
 // ---- vehicle planner ----
-const DEFAULT_CAP={"板車":22,"吊車":""};
-S.cap=Object.assign({},DEFAULT_CAP,S.cap||{});
-const truckType=()=>S.f.truck==="吊車"?"吊車":"板車";
+// 車種：名稱與預設每車載重（噸）；載重可在畫面上微調，依車種分別記住
+const TRUCKS=[["板車","板車",22],["吊車A","吊車",7.3],["吊車B","吊車",10.5],["貨車A","貨車",10],["貨車B","貨車",15]];
+const TNAME=Object.fromEntries(TRUCKS.map(t=>[t[0],t[1]]));
+S.cap=Object.assign(Object.fromEntries(TRUCKS.map(t=>[t[0],t[2]])),S.cap||{});
+if(S.f.truck==="吊車")S.f.truck="吊車A";
+const truckKey=()=>TNAME[S.f.truck]?S.f.truck:"板車";
+const truckLabel=k=>{const c=parseFloat(S.cap[k]);return TNAME[k]+(c>0?" "+fmt(c)+" 噸":"")};
+const truckType=()=>truckLabel(truckKey());
+$("truckSeg").innerHTML=TRUCKS.map(t=>`<button type="button" data-truck="${t[0]}" aria-pressed="false"></button>`).join("");
 function fleetPlan(totalKg){
-  const capT=parseFloat(S.cap[truckType()]);
+  const capT=parseFloat(S.cap[truckKey()]);
   if(!(capT>0))return{capT:null};
   const capKg=capT*1000;
   const n=totalKg>0?Math.ceil(totalKg/capKg-1e-9):0;
@@ -286,12 +291,12 @@ function fleetPlan(totalKg){
   return{capT,capKg,n,loads,spare:n?n*capKg-totalKg:0,avg:n?totalKg/n:0};
 }
 function renderFleet(all){
-  const t=truckType();
-  document.querySelectorAll("[data-truck]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.truck===t));
-  const capEl=$("fCap");if(document.activeElement!==capEl)capEl.value=S.cap[t];
-  capEl.placeholder=t==="吊車"?"請輸入":"";
+  const k=truckKey(),t=TNAME[k];
+  document.querySelectorAll("[data-truck]").forEach(b=>{const c=parseFloat(S.cap[b.dataset.truck]);b.innerHTML=esc(TNAME[b.dataset.truck])+(c>0?`<small>${fmt(c)}t</small>`:"");b.setAttribute("aria-pressed",b.dataset.truck===k)});
+  const capEl=$("fCap");if(document.activeElement!==capEl)capEl.value=S.cap[k];
+  capEl.placeholder="請輸入";
   const p=fleetPlan(all);
-  $("tTruckLbl").textContent=t;
+  $("tTruckLbl").textContent=truckType();
   if(!p.capT){
     $("tTrucks").innerHTML="—";
     $("verdict").innerHTML=`<span class="muted">請先填入${t}每車載重上限（噸），即可算出需要幾台車。</span>`;
@@ -309,7 +314,7 @@ function renderFleet(all){
   }).join("");
 }
 document.querySelectorAll("[data-truck]").forEach(b=>b.addEventListener("click",()=>{S.f.truck=b.dataset.truck;save();renderTotals()}));
-$("fCap").addEventListener("input",()=>{S.cap[truckType()]=$("fCap").value;save();renderTotals()});
+$("fCap").addEventListener("input",()=>{S.cap[truckKey()]=$("fCap").value;save();renderTotals()});
 
 function setQty(id,v){
   v=String(v).trim();
@@ -364,7 +369,7 @@ $("copyBtn").addEventListener("click",()=>{
   }
   txt+=`\n總數：${fmt(h.c+l.c,0)}　總重：${fmt(h.w+l.w)} kg（${((h.w+l.w)/1000).toFixed(3)} 噸）`;
   const p=fleetPlan(h.w+l.w);
-  if(p.capT&&p.n)txt+=`\n車輛：${truckType()} ${p.n} 台（每車上限 ${fmt(p.capT)} 噸）\n`+p.loads.map((x,i)=>`　第 ${i+1} 車：${(x/1000).toFixed(3)} 噸`).join("\n");
+  if(p.capT&&p.n)txt+=`\n車輛：${TNAME[truckKey()]} ${p.n} 台（每車上限 ${fmt(p.capT)} 噸）\n`+p.loads.map((x,i)=>`　第 ${i+1} 車：${(x/1000).toFixed(3)} 噸`).join("\n");
   navigator.clipboard.writeText(txt).then(()=>toast("清單已複製")).catch(()=>{
     const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();
     try{document.execCommand("copy");toast("清單已複製")}catch(e){toast("無法複製，請手動選取")}ta.remove();
