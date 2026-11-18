@@ -296,7 +296,7 @@ function fleetPlan(totalKg){
     for(let i=0;i<n;i++){const l=Math.min(cap,left);list.push({k:key,load:l,cap});left-=l}
     return{list};
   }
-  // 自動搭配：先用板車裝滿，剩下的重量配最小、裝得下的吊車或貨車；都裝不下就再加一台板車
+  // 自動搭配：先用板車裝滿，剩下的重量優先配貨車，貨車裝不下才配吊車；都裝不下就再加一台板車
   const big=capKgOf("板車");if(!big)return{error:"板車"};
   if(totalKg<=0)return{list:[]};
   if(totalKg<=big+1e-6)return{list:[{k:"板車",load:totalKg,cap:big}]};
@@ -304,7 +304,9 @@ function fleetPlan(totalKg){
   for(let i=0;i<n;i++)list.push({k:"板車",load:big,cap:big});
   const rest=totalKg-n*big;
   if(rest>1e-6){
-    const fit=TRUCKS.filter(t=>t[0]!=="板車"&&capKgOf(t[0])>=rest-1e-6).sort((a,b)=>capKgOf(a[0])-capKgOf(b[0]))[0];
+    // 優先用貨車（裝得下的最小一台），貨車都裝不下才用吊車
+    const fitOf=name=>TRUCKS.filter(t=>t[1]===name&&capKgOf(t[0])>=rest-1e-6).sort((a,b)=>capKgOf(a[0])-capKgOf(b[0]))[0];
+    const fit=fitOf("貨車")||fitOf("吊車");
     const k=fit?fit[0]:"板車";list.push({k,load:rest,cap:capKgOf(k)});
   }
   return{list};
