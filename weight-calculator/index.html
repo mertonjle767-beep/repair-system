@@ -76,6 +76,9 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .name{min-width:0}
 .name b{font-weight:500}
 .name span{display:block;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.name.edit{display:flex;flex-direction:column;gap:4px}
+.name.edit input{font:inherit;font-size:14px;padding:4px 7px;border:1px dashed var(--accent);border-radius:5px;background:var(--surface);color:var(--fg);width:100%;min-width:0}
+.name.edit input.spec{font-size:12.5px}
 .unit{text-align:right;font-family:var(--font-num);font-size:13.5px;color:var(--muted)}
 .unit input{width:70px;text-align:right;font:inherit;padding:4px 6px;border:1px dashed var(--accent);border-radius:5px;background:var(--surface);color:var(--fg)}
 .qty{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface)}
@@ -96,7 +99,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .card ul{margin:0;padding-left:18px;color:var(--muted);font-size:14px}
 .card table{width:100%;border-collapse:collapse;font-size:14px}
 .card td{padding:4px 0;border-top:1px solid var(--line)}
-.card td:last-child{text-align:right;font-family:var(--font-num)}
+.card td:last-child{text-align:right;font-family:var(--font-num);white-space:nowrap;padding-left:10px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 16px;border-radius:20px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.show{opacity:1}
 .confirm{display:flex;gap:6px;align-items:center;font-size:14px}
@@ -208,9 +211,13 @@ const DATA={"heavy":[["1","平主架","φ60.2mm 1.0m",6],["2","平主架","φ60.
 // items: key = sheet + row index (NO. repeats in 輕型)
 const ITEMS={};
 for(const k of ["heavy","light"]) ITEMS[k]=DATA[k].map((r,i)=>({id:k+":"+i,no:r[0],name:r[1],spec:r[2],w:r[3]}));
+// 每頁 5 列自訂品項：品名、規格、單重自行填寫，存在 S.cust / S.uw
+const CUSTOM_ROWS=5,CUSTOM_GRP="自訂品項";
+for(const k of ["heavy","light"])for(let i=0;i<CUSTOM_ROWS;i++){const id=k+":c"+i;ITEMS[k].push({id,no:"自"+(i+1),w:null,custom:true,
+  get name(){return (S.cust[id]?.name||"").trim()||"自訂品項 "+(i+1)},get spec(){return (S.cust[id]?.spec||"").trim()}})}
 const LABEL={heavy:"重型",light:"輕型"};
 const STORE="weight-calc-v1";
-let S={tab:"heavy",qty:{},uw:{},f:{}};
+let S={tab:"heavy",qty:{},uw:{},f:{},cust:{}};
 try{const s=JSON.parse(localStorage.getItem(STORE)||"null");if(s)S=Object.assign(S,s)}catch(e){}
 const save=()=>{try{localStorage.setItem(STORE,JSON.stringify(S))}catch(e){}};
 
@@ -220,6 +227,7 @@ const unitW=it=>it.w!=null?it.w:(parseFloat(S.uw[it.id])||0);
 const qtyOf=it=>parseFloat(S.qty[it.id])||0;
 const subOf=it=>Math.round(unitW(it)*qtyOf(it)*1000)/1000;
 const grpKey=n=>n.replace(/^\(輕\)/,"").trim();
+const grpOf=it=>it.custom?CUSTOM_GRP:grpKey(it.name);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 function totals(k){let w=0,c=0;for(const it of ITEMS[k]){w+=subOf(it);c+=qtyOf(it)}return{w:Math.round(w*1000)/1000,c}}
@@ -234,15 +242,16 @@ function renderList(){
   });
   let html='<div class="row head"><div>NO.</div><div>品名／規格</div><div>單重 kg</div><div>數量</div><div>支重 kg</div></div>';
   let last=null;
-  const groups={};for(const it of items){const g=grpKey(it.name);groups[g]=(groups[g]||0)+subOf(it)}
+  const groups={};for(const it of items){const g=grpOf(it);groups[g]=(groups[g]||0)+subOf(it)}
   for(const it of items){
-    const g=grpKey(it.name);
+    const g=grpOf(it);
     if(g!==last){html+=`<div class="grp"><span>${esc(g)}</span><span class="num" data-g="${esc(g)}">${groups[g]?fmt(groups[g])+" kg":""}</span></div>`;last=g}
     const q=S.qty[it.id]??"";const sub=subOf(it);
-    const unit=it.w!=null?fmt(it.w,3):`<input type="number" step="any" min="0" placeholder="待填" aria-label="${esc(it.name)} 單重" data-uw="${it.id}" id="uw-${it.id.replace(':','-')}" value="${esc(S.uw[it.id]??"")}">`;
+    const unit=it.w!=null?fmt(it.w,3):`<input type="number" step="any" min="0" placeholder="${it.custom?"單重kg":"待填"}" aria-label="${esc(it.name)} 單重" data-uw="${it.id}" id="uw-${it.id.replace(':','-')}" value="${esc(S.uw[it.id]??"")}">`;
     html+=`<div class="row${qtyOf(it)?" on":""}" data-row="${it.id}">
       <div class="no">${esc(it.no)}</div>
-      <div class="name"><b>${esc(it.name)}</b><span>${esc(it.spec)||"—"}</span></div>
+      ${it.custom?`<div class="name edit"><input data-cn="${it.id}" placeholder="品名（自訂品項 ${it.no.slice(1)}）" aria-label="自訂品項 ${it.no.slice(1)} 品名" value="${esc(S.cust[it.id]?.name??"")}"><input class="spec" data-cs="${it.id}" placeholder="規格" aria-label="自訂品項 ${it.no.slice(1)} 規格" value="${esc(S.cust[it.id]?.spec??"")}"></div>`
+        :`<div class="name"><b>${esc(it.name)}</b><span>${esc(it.spec)||"—"}</span></div>`}
       <div class="unit">${unit}</div>
       <div class="qty"><button data-step="-1" data-id="${it.id}" aria-label="減少">−</button><input type="number" min="0" step="1" inputmode="numeric" placeholder="0" aria-label="${esc(it.name+" "+it.spec)} 數量" id="q-${it.id.replace(':','-')}" data-q="${it.id}" value="${esc(q)}"><button data-step="1" data-id="${it.id}" aria-label="增加">+</button></div>
       <div class="sub${sub?"":" zero"}" data-sub="${it.id}">${sub?fmt(sub):"0"}</div>
@@ -257,8 +266,8 @@ function updateRow(id){
   const row=document.querySelector(`[data-row="${id}"]`);
   if(row){const s=subOf(it);row.classList.toggle("on",!!qtyOf(it));const c=row.querySelector("[data-sub]");c.textContent=s?fmt(s):"0";c.classList.toggle("zero",!s)}
   // group subtotal
-  const g=grpKey(it.name);const el=[...document.querySelectorAll("[data-g]")].find(e=>e.dataset.g===g);
-  if(el){const t=ITEMS[k].filter(x=>grpKey(x.name)===g).reduce((a,x)=>a+subOf(x),0);el.textContent=t?fmt(t)+" kg":""}
+  const g=grpOf(it);const el=[...document.querySelectorAll("[data-g]")].find(e=>e.dataset.g===g);
+  if(el){const t=ITEMS[k].filter(x=>grpOf(x)===g).reduce((a,x)=>a+subOf(x),0);el.textContent=t?fmt(t)+" kg":""}
 }
 
 function renderTotals(){
@@ -354,6 +363,8 @@ function setQty(id,v){
 $("list").addEventListener("input",e=>{
   const t=e.target;
   if(t.dataset.q)setQty(t.dataset.q,t.value);
+  if(t.dataset.cn||t.dataset.cs){const id=t.dataset.cn||t.dataset.cs;const c=S.cust[id]||(S.cust[id]={});c[t.dataset.cn?"name":"spec"]=t.value;
+    if(!c.name&&!c.spec)delete S.cust[id];save();renderTotals()}
   if(t.dataset.uw){if(t.value==="")delete S.uw[t.dataset.uw];else S.uw[t.dataset.uw]=t.value;save();updateRow(t.dataset.uw);renderTotals()}
 });
 $("list").addEventListener("click",e=>{
