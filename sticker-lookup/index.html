@@ -15,36 +15,48 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
 :root{
-  --bg:#eef1f4; --surface:#ffffff; --surface-2:#f5f7f9; --line:#d6dce3;
-  --fg:#1b2430; --muted:#5d6b7b; --accent:#13814a; --accent-soft:#e3f4ea; --accent-fg:#ffffff;
-  --steel:#2f4a66; --steel-fg:#ffffff; --warn:#b3261e; --local:#8a5a00; --local-soft:#fff3d6;
+  /* 哆啦A夢配色：與 tokyo-map 相同的藍身、紅項圈、黃鈴鐺 */
+  --bg:#e4f3fc; --surface:#ffffff; --surface-2:#f1f9fe; --line:#cde3f0;
+  --fg:#10243a; --muted:#4d6880; --accent:#0077c0; --accent-soft:#dbeffb; --accent-fg:#ffffff;
+  --dora:#0a9be0; --on-dora:#ffffff; --on-dora-soft:#e3f4fd; --collar:#e5322d; --bell:#f6c40f; --bell-ink:#4a3200;
+  --warn:#c8231e; --local:#8a6100; --local-soft:#fff6cf;
   --font-body:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;
   --font-num:"IBM Plex Mono",ui-monospace,Consolas,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#12171d; --surface:#1a2129; --surface-2:#202933; --line:#2e3946;
-  --fg:#e6ebf0; --muted:#94a2b3; --accent:#3fbf7f; --accent-soft:#16301f; --accent-fg:#06140c;
-  --steel:#24384e; --steel-fg:#eef3f8; --warn:#ff8a80; --local:#f0c060; --local-soft:#3a2d10; color-scheme:dark}}
+  --bg:#0b1a26; --surface:#0f2030; --surface-2:#132a3d; --line:#22394a;
+  --fg:#e6f2fa; --muted:#93acc0; --accent:#4cc0f5; --accent-soft:#15344a; --accent-fg:#06141e;
+  --dora:#0a6fa8; --on-dora:#ffffff; --on-dora-soft:#cfe9f8; --collar:#d42f2a; --bell:#f6c40f; --bell-ink:#4a3200;
+  --warn:#ff7a70; --local:#f6c40f; --local-soft:#33290a; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#12171d; --surface:#1a2129; --surface-2:#202933; --line:#2e3946;
-  --fg:#e6ebf0; --muted:#94a2b3; --accent:#3fbf7f; --accent-soft:#16301f; --accent-fg:#06140c;
-  --steel:#24384e; --steel-fg:#eef3f8; --warn:#ff8a80; --local:#f0c060; --local-soft:#3a2d10; color-scheme:dark}
+  --bg:#0b1a26; --surface:#0f2030; --surface-2:#132a3d; --line:#22394a;
+  --fg:#e6f2fa; --muted:#93acc0; --accent:#4cc0f5; --accent-soft:#15344a; --accent-fg:#06141e;
+  --dora:#0a6fa8; --on-dora:#ffffff; --on-dora-soft:#cfe9f8; --collar:#d42f2a; --bell:#f6c40f; --bell-ink:#4a3200;
+  --warn:#ff7a70; --local:#f6c40f; --local-soft:#33290a; color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.5}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--steel)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--dora)}
 .wrap{max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 button,input,select,textarea{font:inherit;color:inherit}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--steel);color:var(--steel-fg);box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--dora);color:var(--on-dora);border-bottom:7px solid var(--collar);box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.brand{display:flex;align-items:center;gap:12px}
+.brand>div{min-width:0}
+.bell{position:relative;width:26px;height:26px;border-radius:50%;flex:none;background:var(--bell);border:1.5px solid var(--bell-ink);box-shadow:0 0 0 3px var(--on-dora)}
+.bell::before{content:"";position:absolute;left:2px;right:2px;top:8px;height:1.5px;background:var(--bell-ink)}
+.bell::after{content:"";position:absolute;left:50%;top:13px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--bell-ink);box-shadow:0 4px 0 -1px var(--bell-ink)}
+#addBtn{background:var(--bell);border-color:var(--bell-ink);color:var(--bell-ink)}
+#addBtn:hover{filter:brightness(1.05)}
 .top .wrap{padding-block:12px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
 .brand{flex:1 1 220px;min-width:0}
 .brand h1{margin:0;font-size:20px;font-weight:900;letter-spacing:.04em}
-.brand span{font-size:12px;opacity:.75}
+.brand span{display:block;font-size:12px;color:var(--on-dora-soft)}
 .q{flex:3 1 320px;display:flex;gap:8px;min-width:0}
-.q input{flex:1;min-width:0;padding:10px 12px;border-radius:8px;border:0;background:#fff;color:#1b2430;font-size:16px}
+.q input{flex:1;min-width:0;padding:10px 12px;border-radius:8px;border:0;background:#fff;color:#10243a;font-size:16px}
+.q input:focus-visible{outline:3px solid var(--bell);outline-offset:1px}
 .btn{padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;white-space:nowrap}
 .btn:hover{border-color:var(--accent)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:700}
@@ -61,7 +73,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .list{margin:14px 0 40px;display:grid;gap:12px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .card.local{border-color:var(--local)}
-.head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;padding:12px 14px;border-bottom:2px solid var(--collar);background:var(--surface-2)}
 .head h2{margin:0;font-size:19px;font-weight:900}
 .no{font-family:var(--font-num);font-size:12px;color:var(--muted)}
 .chip{font-size:12px;padding:1px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:700}
@@ -134,7 +146,7 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
 <body>
 <header class="top">
   <div class="wrap">
-    <div class="brand"><h1>客戶貼紙查詢</h1><span>貼紙樣式・張貼位置・數量・字模・滾字位置</span></div>
+    <div class="brand"><span class="bell" aria-hidden="true"></span><div><h1>客戶貼紙查詢</h1><span>貼紙樣式・張貼位置・數量・字模・滾字位置</span></div></div>
     <div class="q">
       <input id="q" type="search" placeholder="輸入客戶名稱，例如：永清" autocomplete="off" aria-label="客戶名稱">
       <button class="btn primary" id="addBtn" type="button">＋ 新增客戶</button>
