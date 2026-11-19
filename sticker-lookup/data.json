@@ -1,0 +1,2849 @@
+{
+ "source": "20160714字模統計（貼紙.xlsx）",
+ "customers": [
+  {
+   "id": "x4",
+   "no": 1,
+   "name": "鑫永富",
+   "sticker": "鑫永富",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "鑫永富",
+   "qty": "3",
+   "moldL": "鑫永富",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/098.jpg",
+     "label": "鑫永富"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x5",
+   "no": 2,
+   "name": "政航",
+   "sticker": "政航",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "政航",
+   "qty": "3",
+   "moldL": "政航",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/026.jpg",
+     "label": "政航"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x6",
+   "no": 3,
+   "name": "昇鉅",
+   "sticker": "",
+   "paste": "",
+   "roll": "頭邊",
+   "posRaw": "滾頭邊",
+   "mold": "昇鉅",
+   "qty": "2",
+   "moldL": "昇鉅",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x7",
+   "no": 4,
+   "name": "盛達",
+   "sticker": "盛達",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "盛達",
+   "qty": "2",
+   "moldL": "盛達",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/036.jpg",
+     "label": "盛達"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x8",
+   "no": 5,
+   "name": "大豐燿",
+   "sticker": "大豐耀",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "大豐燿",
+   "qty": "2",
+   "moldL": "大豐燿",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "105/10 改貼中間",
+   "styles": [
+    {
+     "img": "img/046.jpg",
+     "label": "大豐耀"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x9",
+   "no": 6,
+   "name": "進通",
+   "sticker": "進通",
+   "paste": "頭邊",
+   "roll": "頭邊",
+   "posRaw": "滾頭邊-貼頭邊",
+   "mold": "進通",
+   "qty": "1",
+   "moldL": "進通",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x10",
+   "no": 7,
+   "name": "美璁",
+   "sticker": "美璁",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "美璁",
+   "qty": "2",
+   "moldL": "美璁",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x11",
+   "no": 8,
+   "name": "允贊",
+   "sticker": "允贊",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "允贊",
+   "qty": "1",
+   "moldL": "允贊",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/034.jpg",
+     "label": "允贊"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x12",
+   "no": 9,
+   "name": "永久",
+   "sticker": "永久",
+   "paste": "中間",
+   "roll": "中間",
+   "posRaw": "滾中間-貼中間",
+   "mold": "永久",
+   "qty": "4",
+   "moldL": "永久",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/000.jpg",
+     "label": "永久"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x13",
+   "no": 10,
+   "name": "亞旭",
+   "sticker": "",
+   "paste": "",
+   "roll": "中間",
+   "posRaw": "滾中間",
+   "mold": "亞旭",
+   "qty": "2",
+   "moldL": "亞旭",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x14",
+   "no": 11,
+   "name": "(力愷)凱駿",
+   "sticker": "凱駿",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間 貼頭邊",
+   "mold": "凱駿3",
+   "qty": "1",
+   "moldL": "凱駿3",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/064.jpg",
+     "label": "凱駿"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x15",
+   "no": 12,
+   "name": "八方",
+   "sticker": "八方",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "八方",
+   "qty": "4",
+   "moldL": "八方",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x16",
+   "no": 13,
+   "name": "科毅",
+   "sticker": "科毅",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "科毅",
+   "qty": "1",
+   "moldL": "科毅",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x17",
+   "no": 14,
+   "name": "高安",
+   "sticker": "高安",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "高安",
+   "qty": "1",
+   "moldL": "高安",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/003.jpg",
+     "label": "高安"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x18",
+   "no": 15,
+   "name": "唯鴻",
+   "sticker": "唯鴻",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "唯鴻",
+   "qty": "1",
+   "moldL": "唯鴻",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "改附貼紙",
+   "styles": [
+    {
+     "img": "img/001.jpg",
+     "label": "唯鴻"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x19",
+   "no": 16,
+   "name": "昌益",
+   "sticker": "在豐",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "ZF△",
+   "qty": "1",
+   "moldL": "ZF△",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x20",
+   "no": 17,
+   "name": "實固",
+   "sticker": "",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "SUCOOT",
+   "qty": "1",
+   "moldL": "SUCOOT",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x21",
+   "no": 18,
+   "name": "泰山",
+   "sticker": "泰山",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "泰山",
+   "qty": "1",
+   "moldL": "泰山",
+   "moldM": "尺寸",
+   "moldS": "西元年",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x22",
+   "no": 19,
+   "name": "永和益",
+   "sticker": "永合益",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "永和益",
+   "qty": "1",
+   "moldL": "永和益",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x23",
+   "no": 20,
+   "name": "鴻麒",
+   "sticker": "鴻麒",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "鴻麒",
+   "qty": "1",
+   "moldL": "鴻麒",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/024.jpg",
+     "label": "鴻麒"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x24",
+   "no": 21,
+   "name": "尚甫",
+   "sticker": "尚甫",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "尚甫",
+   "qty": "1",
+   "moldL": "尚甫",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x25",
+   "no": 22,
+   "name": "哲銓",
+   "sticker": "哲銓",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "哲銓",
+   "qty": "1",
+   "moldL": "哲銓",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/002.jpg",
+     "label": "哲銓"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x26",
+   "no": 23,
+   "name": "速雲",
+   "sticker": "速雲",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "速雲",
+   "qty": "1",
+   "moldL": "速雲",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x27",
+   "no": 24,
+   "name": "呈光",
+   "sticker": "呈光",
+   "paste": "頭邊（2 張）",
+   "roll": "中間",
+   "posRaw": "滾中間 貼頭邊(2張)",
+   "mold": "呈光",
+   "qty": "1",
+   "moldL": "呈光",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x28",
+   "no": 25,
+   "name": "春富",
+   "sticker": "春富",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "春富",
+   "qty": "1",
+   "moldL": "春富",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x29",
+   "no": 26,
+   "name": "堃弘",
+   "sticker": "",
+   "paste": "",
+   "roll": "中間",
+   "posRaw": "滾中間",
+   "mold": "堃弘",
+   "qty": "1",
+   "moldL": "堃弘",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x30",
+   "no": 27,
+   "name": "昌益",
+   "sticker": "在豐",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "昌益",
+   "qty": "1",
+   "moldL": "昌益",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x31",
+   "no": 28,
+   "name": "萬國",
+   "sticker": "工固貼紙",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "德潤",
+   "qty": "1",
+   "moldL": "德潤",
+   "moldM": "—\n2014單",
+   "moldS": "系統",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x32",
+   "no": 29,
+   "name": "鉞鑫",
+   "sticker": "鉞鑫工程",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "鉞鑫",
+   "qty": "1",
+   "moldL": "鉞鑫",
+   "moldM": "X",
+   "moldS": "X",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x33",
+   "no": 30,
+   "name": "AE(哥倫比亞)",
+   "sticker": "",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "005",
+   "qty": "1",
+   "moldL": "005",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x34",
+   "no": 31,
+   "name": "永清",
+   "sticker": "永清",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "永清",
+   "qty": "1",
+   "moldL": "永清",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/015.jpg",
+     "label": "永清"
+    },
+    {
+     "img": "img/016.jpg",
+     "label": "永清"
+    },
+    {
+     "img": "img/043.jpg",
+     "label": "永清"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x35",
+   "no": 32,
+   "name": "富興",
+   "sticker": "富興",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "富興",
+   "qty": "1",
+   "moldL": "富興",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "2021/10/21新增黃底白字款",
+   "styles": [
+    {
+     "img": "img/022.jpg",
+     "label": "富興"
+    },
+    {
+     "img": "img/085.jpg",
+     "label": "富興（2021/10/21新增黃底白字款）"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x37",
+   "no": 33,
+   "name": "茂順",
+   "sticker": "茂順",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "茂順",
+   "qty": "1",
+   "moldL": "茂順",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/041.jpg",
+     "label": "茂順"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x38",
+   "no": 34,
+   "name": "展辰",
+   "sticker": "展辰",
+   "paste": "中間",
+   "roll": "中間",
+   "posRaw": "貼中間/滾中間",
+   "mold": "定尺",
+   "qty": "1",
+   "moldL": "定尺",
+   "moldM": "",
+   "moldS": "",
+   "note": "2021改貼中間",
+   "styles": [
+    {
+     "img": "img/068.jpg",
+     "label": "展辰"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x39",
+   "no": 35,
+   "name": "天耀",
+   "sticker": "X",
+   "paste": "無",
+   "roll": "",
+   "posRaw": "X",
+   "mold": "天耀",
+   "qty": "1",
+   "moldL": "天耀",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x40",
+   "no": 36,
+   "name": "崑嵩",
+   "sticker": "崑KS嵩",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "崑嵩",
+   "qty": "1",
+   "moldL": "崑嵩",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/023.jpg",
+     "label": "崑KS嵩"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x41",
+   "no": 37,
+   "name": "鵬群",
+   "sticker": "鵬Cp群",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "鵬群",
+   "qty": "1",
+   "moldL": "鵬群",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x42",
+   "no": 38,
+   "name": "新立亞",
+   "sticker": "新立亞",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "新立亞",
+   "qty": "1",
+   "moldL": "新立亞",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "2019/9改貼中間",
+   "styles": [
+    {
+     "img": "img/054.jpg",
+     "label": "新立亞"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x43",
+   "no": 39,
+   "name": "瑋權",
+   "sticker": "尊奉",
+   "paste": "字旁邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼字旁邊",
+   "mold": "瑋權",
+   "qty": "1",
+   "moldL": "瑋權",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "2022改貼中間；2022/2/9新版",
+   "styles": [
+    {
+     "img": "img/028.jpg",
+     "label": "尊奉"
+    },
+    {
+     "img": "img/086.jpg",
+     "label": "尊奉+電話（2022/2/9新版）"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x45",
+   "no": 40,
+   "name": "佑昇",
+   "sticker": "佑昇",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "佑昇",
+   "qty": "1",
+   "moldL": "佑昇",
+   "moldM": "X",
+   "moldS": "X",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/029.jpg",
+     "label": "佑昇"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x46",
+   "no": 41,
+   "name": "得協",
+   "sticker": "",
+   "paste": "",
+   "roll": "中間",
+   "posRaw": "滾中間",
+   "mold": "",
+   "qty": "1",
+   "moldL": "得協",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x47",
+   "no": 42,
+   "name": "大奇",
+   "sticker": "大奇",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "",
+   "qty": "1",
+   "moldL": "大奇",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/010.jpg",
+     "label": "大奇"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x48",
+   "no": 43,
+   "name": "AE(哥倫比亞)",
+   "sticker": "AE貼紙(外銷品)",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "",
+   "qty": "1",
+   "moldL": "AE",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x50",
+   "no": 45,
+   "name": "承新",
+   "sticker": "承新",
+   "paste": "頭邊",
+   "roll": "",
+   "posRaw": "貼頭邊",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x51",
+   "no": 46,
+   "name": "科毅.固駩",
+   "sticker": "固駩",
+   "paste": "中間",
+   "roll": "中間",
+   "posRaw": "滾中間-貼中間",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/035.jpg",
+     "label": "固駩"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x52",
+   "no": 47,
+   "name": "永力達",
+   "sticker": "永力達",
+   "paste": "頭邊",
+   "roll": "",
+   "posRaw": "貼頭邊",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/032.jpg",
+     "label": "永力達"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x53",
+   "no": 48,
+   "name": "慶發",
+   "sticker": "倉麟",
+   "paste": "頭邊",
+   "roll": "",
+   "posRaw": "貼頭邊",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x54",
+   "no": 49,
+   "name": "漢珈",
+   "sticker": "錠昌",
+   "paste": "頭邊",
+   "roll": "",
+   "posRaw": "貼頭邊",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x55",
+   "no": 50,
+   "name": "錠昌",
+   "sticker": "錠昌",
+   "paste": "頭邊（蛋殼貼紙＋錠昌貼紙）",
+   "roll": "",
+   "posRaw": "貼頭邊-蛋殼貼紙及錠昌貼紙",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x56",
+   "no": 51,
+   "name": "錠昌",
+   "sticker": "錠昌(客戶提供)",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "單獨買賣",
+   "styles": [
+    {
+     "img": "img/030.jpg",
+     "label": "錠昌(客戶提供)"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x57",
+   "no": 52,
+   "name": "六穩",
+   "sticker": "六穩",
+   "paste": "頭邊",
+   "roll": "",
+   "posRaw": "貼頭邊",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x58",
+   "no": 53,
+   "name": "怡豐",
+   "sticker": "怡豐",
+   "paste": "頭邊",
+   "roll": "",
+   "posRaw": "貼頭邊",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x59",
+   "no": 54,
+   "name": "良勝",
+   "sticker": "良勝",
+   "paste": "頭邊",
+   "roll": "",
+   "posRaw": "貼頭邊",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x60",
+   "no": 55,
+   "name": "偉鋼",
+   "sticker": "偉鋼",
+   "paste": "頭邊",
+   "roll": "",
+   "posRaw": "貼頭邊",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/004.jpg",
+     "label": "偉鋼"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x61",
+   "no": 56,
+   "name": "陞隆",
+   "sticker": "陞隆",
+   "paste": "頭邊",
+   "roll": "",
+   "posRaw": "貼頭邊",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/007.jpg",
+     "label": "陞隆"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x62",
+   "no": 57,
+   "name": "三興",
+   "sticker": "三興",
+   "paste": "中間",
+   "roll": "",
+   "posRaw": "貼中間",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/008.jpg",
+     "label": "三興"
+    }
+   ],
+   "place": [
+    {
+     "img": "img/105.jpg",
+     "label": "三興三角側架貼法"
+    },
+    {
+     "img": "img/106.jpg",
+     "label": "三興三角側架貼法"
+    }
+   ]
+  },
+  {
+   "id": "x63",
+   "no": 58,
+   "name": "華成(町井井",
+   "sticker": "華成",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "貼頭邊/滾中間",
+   "mold": "華成",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "2017年起滾字",
+   "styles": [
+    {
+     "img": "img/009.jpg",
+     "label": "華成"
+    }
+   ],
+   "place": [
+    {
+     "img": "img/099.jpg",
+     "label": "華成三角托架貼法"
+    },
+    {
+     "img": "img/100.jpg",
+     "label": "華成三角側架貼法"
+    },
+    {
+     "img": "img/101.jpg",
+     "label": "華成三角架貼法"
+    }
+   ]
+  },
+  {
+   "id": "x64",
+   "no": 59,
+   "name": "承奇",
+   "sticker": "承奇",
+   "paste": "頭邊",
+   "roll": "",
+   "posRaw": "貼頭邊",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/011.jpg",
+     "label": "承奇"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x65",
+   "no": 60,
+   "name": "寬鴻",
+   "sticker": "寬鴻",
+   "paste": "中間",
+   "roll": "中間",
+   "posRaw": "貼中間、滾中間",
+   "mold": "",
+   "qty": "",
+   "moldL": "寬鴻",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/012.jpg",
+     "label": "寬鴻"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x66",
+   "no": 61,
+   "name": "漢唐",
+   "sticker": "漢唐",
+   "paste": "頭邊",
+   "roll": "",
+   "posRaw": "貼頭邊",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/006.jpg",
+     "label": "漢唐"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x67",
+   "no": 62,
+   "name": "中華保溫",
+   "sticker": "中華保溫",
+   "paste": "頭邊（主架 1 張、橫桿 2 張）",
+   "roll": "頭邊",
+   "posRaw": "滾頭邊-貼頭邊1.主1張2.橫2張",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/033.jpg",
+     "label": "中華保溫"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x68",
+   "no": 63,
+   "name": "晶勝",
+   "sticker": "",
+   "paste": "頭邊（公司貼紙＋STK500 貼紙各 1 張）",
+   "roll": "",
+   "posRaw": "貼頭邊+STK500 貼紙各1張",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/013.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x69",
+   "no": 64,
+   "name": "煒翔(程泰)",
+   "sticker": "程泰         實固  STK500",
+   "paste": "頭邊",
+   "roll": "",
+   "posRaw": "貼頭邊",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x70",
+   "no": 65,
+   "name": "大宜昌",
+   "sticker": "承翰",
+   "paste": "頭邊",
+   "roll": "",
+   "posRaw": "貼頭邊",
+   "mold": "×",
+   "qty": "×",
+   "moldL": "×",
+   "moldM": "×",
+   "moldS": "×",
+   "note": "2019/11大宜昌貼紙改\"金湧\"，客人提供",
+   "styles": [
+    {
+     "img": "img/031.jpg",
+     "label": "承翰"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x71",
+   "no": 66,
+   "name": "竣瑋",
+   "sticker": "竣瑋",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "竣瑋",
+   "qty": "1",
+   "moldL": "竣瑋",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/014.jpg",
+     "label": "竣瑋"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x72",
+   "no": 67,
+   "name": "竣瑋",
+   "sticker": "1408 J-01單",
+   "paste": "寄給客戶貼",
+   "roll": "",
+   "posRaw": "寄給客戶貼",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x73",
+   "no": 68,
+   "name": "竣瑋",
+   "sticker": "1411 J-01單",
+   "paste": "寄給客戶貼",
+   "roll": "",
+   "posRaw": "寄給客戶貼",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x74",
+   "no": 69,
+   "name": "竣瑋",
+   "sticker": "1404 J-01單",
+   "paste": "寄給客戶貼",
+   "roll": "",
+   "posRaw": "寄給客戶貼",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/021.jpg",
+     "label": "1404 J-01單"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x75",
+   "no": 70,
+   "name": "竣瑋",
+   "sticker": "1503 J-01單",
+   "paste": "寄給客戶貼",
+   "roll": "",
+   "posRaw": "寄給客戶貼",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x76",
+   "no": 71,
+   "name": "恆崗",
+   "sticker": "恆崗",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/018.jpg",
+     "label": "恆崗"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x77",
+   "no": 72,
+   "name": "永明昌",
+   "sticker": "工固貼紙",
+   "paste": "無",
+   "roll": "",
+   "posRaw": "無",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x78",
+   "no": 73,
+   "name": "協泉",
+   "sticker": "無",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x79",
+   "no": 74,
+   "name": "固輝",
+   "sticker": "",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/005.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x80",
+   "no": 75,
+   "name": "里展",
+   "sticker": "",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/017.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x81",
+   "no": 76,
+   "name": "鉞鑫",
+   "sticker": "",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/019.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x82",
+   "no": 77,
+   "name": "艾斯敦",
+   "sticker": "",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/020.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x83",
+   "no": 78,
+   "name": "國豐",
+   "sticker": "",
+   "paste": "頭邊",
+   "roll": "",
+   "posRaw": "貼頭邊",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/025.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x84",
+   "no": 79,
+   "name": "廷祐",
+   "sticker": "",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/027.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x85",
+   "no": 80,
+   "name": "揚築/築欣",
+   "sticker": "揚築",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/037.jpg",
+     "label": "揚築"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x86",
+   "no": 81,
+   "name": "鼎安",
+   "sticker": "鼎安",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/038.jpg",
+     "label": "鼎安"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x87",
+   "no": 82,
+   "name": "威志",
+   "sticker": "威志",
+   "paste": "頭邊",
+   "roll": "",
+   "posRaw": "貼頭邊",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/040.jpg",
+     "label": "威志"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x88",
+   "no": 83,
+   "name": "品鏵",
+   "sticker": "品鏵",
+   "paste": "頭邊",
+   "roll": "",
+   "posRaw": "貼頭邊",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/039.jpg",
+     "label": "品鏵"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x89",
+   "no": 84,
+   "name": "元桀",
+   "sticker": "元桀",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "直接出貨",
+   "styles": [
+    {
+     "img": "img/042.jpg",
+     "label": "元桀"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x90",
+   "no": 85,
+   "name": "巧貹",
+   "sticker": "巧貹",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/044.jpg",
+     "label": "巧貹"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x91",
+   "no": 86,
+   "name": "源益",
+   "sticker": "源益",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/047.jpg",
+     "label": "源益"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x92",
+   "no": 87,
+   "name": "揚神",
+   "sticker": "揚神工程有限公司",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/048.jpg",
+     "label": "揚神工程有限公司"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x93",
+   "no": 88,
+   "name": "逸鷹",
+   "sticker": "逸鷹",
+   "paste": "頭邊",
+   "roll": "中間",
+   "posRaw": "滾中間-貼頭邊",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/049.jpg",
+     "label": "逸鷹"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x94",
+   "no": 89,
+   "name": "富景",
+   "sticker": "富景 永寶通+電話",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/050.jpg",
+     "label": "富景 永寶通+電話"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x95",
+   "no": 90,
+   "name": "廣建",
+   "sticker": "",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/051.jpg",
+     "label": ""
+    },
+    {
+     "img": "img/052.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x96",
+   "no": 91,
+   "name": "勇泰",
+   "sticker": "勇泰",
+   "paste": "中間",
+   "roll": "",
+   "posRaw": "貼中間",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/056.jpg",
+     "label": "勇泰"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x97",
+   "no": 92,
+   "name": "宇安成",
+   "sticker": "宇安成",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/057.jpg",
+     "label": "宇安成"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x98",
+   "no": 93,
+   "name": "杉禾",
+   "sticker": "杉禾",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/058.jpg",
+     "label": "杉禾"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x99",
+   "no": 94,
+   "name": "信嬅",
+   "sticker": "信嬅",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/059.jpg",
+     "label": "信嬅"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x100",
+   "no": 95,
+   "name": "森岳",
+   "sticker": "森岳",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/045.jpg",
+     "label": "森岳"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x101",
+   "no": 96,
+   "name": "紘昇",
+   "sticker": "明旺",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/069.jpg",
+     "label": "明旺"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x102",
+   "no": 97,
+   "name": "芮榮",
+   "sticker": "芮榮",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/060.jpg",
+     "label": "芮榮"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x103",
+   "no": 98,
+   "name": "麒翔",
+   "sticker": "麒翔",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/061.jpg",
+     "label": "麒翔"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x104",
+   "no": 99,
+   "name": "昱勝",
+   "sticker": "昱勝",
+   "paste": "中間",
+   "roll": "中間",
+   "posRaw": "滾中間、貼中間",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/062.jpg",
+     "label": "昱勝"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x105",
+   "no": 100,
+   "name": "同興",
+   "sticker": "同興",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/063.jpg",
+     "label": "同興"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x106",
+   "no": 101,
+   "name": "炳澤",
+   "sticker": "炳澤",
+   "paste": "中間",
+   "roll": "中間",
+   "posRaw": "滾中間、貼中間",
+   "mold": "X",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/065.jpg",
+     "label": "炳澤"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x107",
+   "no": 102,
+   "name": "呂發",
+   "sticker": "呂發",
+   "paste": "頭邊",
+   "roll": "",
+   "posRaw": "貼頭邊",
+   "mold": "X",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/066.jpg",
+     "label": "呂發"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x108",
+   "no": 103,
+   "name": "成穎",
+   "sticker": "成穎",
+   "paste": "中間",
+   "roll": "中間",
+   "posRaw": "滾中間、貼中間",
+   "mold": "成穎",
+   "qty": "",
+   "moldL": "成穎",
+   "moldM": "V",
+   "moldS": "V",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/067.jpg",
+     "label": "成穎"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x109",
+   "no": 104,
+   "name": "亞洲航空",
+   "sticker": "直接出貨",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/070.jpg",
+     "label": "直接出貨"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x110",
+   "no": 104,
+   "name": "晟鈦",
+   "sticker": "晟鈦",
+   "paste": "頭邊",
+   "roll": "",
+   "posRaw": "貼頭邊",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/071.jpg",
+     "label": "晟鈦"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x111",
+   "no": 105,
+   "name": "全宸",
+   "sticker": "全宸",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/072.jpg",
+     "label": "全宸"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x112",
+   "no": 106,
+   "name": "和泰",
+   "sticker": "和泰",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/073.jpg",
+     "label": "和泰"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x113",
+   "no": 107,
+   "name": "大宜昌",
+   "sticker": "大宜昌",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/074.jpg",
+     "label": "大宜昌"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x114",
+   "no": 108,
+   "name": "品奕",
+   "sticker": "",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/076.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x115",
+   "no": 109,
+   "name": "喬煒",
+   "sticker": "士誠",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "原士誠 2020/7/15改名喬煒",
+   "styles": [
+    {
+     "img": "img/075.jpg",
+     "label": "士誠"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x116",
+   "no": 110,
+   "name": "長陽",
+   "sticker": "",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/077.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x117",
+   "no": 111,
+   "name": "上帆",
+   "sticker": "聖捷",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/078.jpg",
+     "label": "聖捷"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x118",
+   "no": 112,
+   "name": "定立",
+   "sticker": "",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/079.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x119",
+   "no": 113,
+   "name": "台中鐵架",
+   "sticker": "山城",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/080.jpg",
+     "label": "山城"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x120",
+   "no": 114,
+   "name": "中華工程",
+   "sticker": "BES 中華",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/081.jpg",
+     "label": "BES 中華"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x121",
+   "no": 115,
+   "name": "佳詺",
+   "sticker": "佳詺",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/082.jpg",
+     "label": "佳詺"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x122",
+   "no": 116,
+   "name": "鴻漢",
+   "sticker": "",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/083.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x123",
+   "no": 117,
+   "name": "築九",
+   "sticker": "",
+   "paste": "主架貼中間；橫、斜桿貼旁邊",
+   "roll": "",
+   "posRaw": "主-貼中間 橫、斜桿-貼旁邊",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/084.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x124",
+   "no": 118,
+   "name": "辰光",
+   "sticker": "",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/087.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x125",
+   "no": 119,
+   "name": "和格",
+   "sticker": "",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/088.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x126",
+   "no": 120,
+   "name": "偉力",
+   "sticker": "",
+   "paste": "同公司貼法",
+   "roll": "",
+   "posRaw": "同公司貼法",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/089.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x127",
+   "no": 121,
+   "name": "澎匠",
+   "sticker": "",
+   "paste": "頭邊",
+   "roll": "",
+   "posRaw": "貼頭邊",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/090.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x128",
+   "no": 122,
+   "name": "廷俐",
+   "sticker": "",
+   "paste": "中間",
+   "roll": "",
+   "posRaw": "貼中間",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/091.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x129",
+   "no": 123,
+   "name": "永洋",
+   "sticker": "",
+   "paste": "中間",
+   "roll": "",
+   "posRaw": "貼中間",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "客戶提供",
+   "styles": [
+    {
+     "img": "img/092.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x130",
+   "no": 124,
+   "name": "茂泰",
+   "sticker": "",
+   "paste": "頭邊",
+   "roll": "",
+   "posRaw": "貼頭邊",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x131",
+   "no": 125,
+   "name": "勇鴻",
+   "sticker": "",
+   "paste": "左實固+右勇鴻",
+   "roll": "",
+   "posRaw": "左實固+右勇鴻",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/093.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x132",
+   "no": 126,
+   "name": "弘騏",
+   "sticker": "",
+   "paste": "中間(轉一圈)",
+   "roll": "",
+   "posRaw": "貼中間(轉一圈)",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x133",
+   "no": 127,
+   "name": "磊高",
+   "sticker": "",
+   "paste": "中間(橫桿類似揚築，主架直貼)",
+   "roll": "",
+   "posRaw": "貼中間(橫桿類似揚築，主架直貼)",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/094.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x134",
+   "no": 128,
+   "name": "偉林(主)",
+   "sticker": "",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/095.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x135",
+   "no": 129,
+   "name": "偉林(橫)",
+   "sticker": "",
+   "paste": "",
+   "roll": "",
+   "posRaw": "",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/096.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x136",
+   "no": 130,
+   "name": "金宏軒",
+   "sticker": "",
+   "paste": "中間",
+   "roll": "",
+   "posRaw": "貼中間",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/097.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x137",
+   "no": 131,
+   "name": "匯發",
+   "sticker": "",
+   "paste": "不貼貼紙",
+   "roll": "中間",
+   "posRaw": "×貼紙，滾字中間",
+   "mold": "匯發",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [],
+   "place": []
+  },
+  {
+   "id": "x138",
+   "no": 132,
+   "name": "得琳",
+   "sticker": "",
+   "paste": "頭邊",
+   "roll": "",
+   "posRaw": "貼頭邊",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/102.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x139",
+   "no": 133,
+   "name": "定誠",
+   "sticker": "",
+   "paste": "橫桿貼中間(類似揚築)主架直貼頭邊",
+   "roll": "",
+   "posRaw": "橫桿貼中間(類似揚築)主架直貼頭邊",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/103.jpg",
+     "label": ""
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x140",
+   "no": 134,
+   "name": "井上",
+   "sticker": "井上/井寶(*主架用)",
+   "paste": "中間",
+   "roll": "",
+   "posRaw": "貼中間",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/109.jpg",
+     "label": "井上/井寶(*主架用)"
+    },
+    {
+     "img": "img/110.jpg",
+     "label": "井上/井寶(*橫桿用)"
+    }
+   ],
+   "place": []
+  },
+  {
+   "id": "x142",
+   "no": 135,
+   "name": "聚陞",
+   "sticker": "聚陞/銑廣",
+   "paste": "中間",
+   "roll": "",
+   "posRaw": "貼中間",
+   "mold": "",
+   "qty": "",
+   "moldL": "",
+   "moldM": "",
+   "moldS": "",
+   "note": "",
+   "styles": [
+    {
+     "img": "img/111.jpg",
+     "label": "聚陞/銑廣"
+    }
+   ],
+   "place": [
+    {
+     "img": "img/107.jpg",
+     "label": "聚陞爬梯貼法"
+    },
+    {
+     "img": "img/108.jpg",
+     "label": "聚陞爬梯貼法"
+    },
+    {
+     "img": "img/104.jpg",
+     "label": "手繪貼法說明"
+    }
+   ]
+  }
+ ],
+ "extra": [
+  {
+   "img": "img/053.jpg",
+   "label": "立鼎貼紙（Excel 未標示客戶）"
+  },
+  {
+   "img": "img/055.jpg",
+   "label": "立鼎貼紙（Excel 未標示客戶）"
+  }
+ ]
+}
