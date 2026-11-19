@@ -42,7 +42,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 button,input,select,textarea{font:inherit;color:inherit}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--dora);color:var(--on-dora);border-bottom:7px solid var(--collar);box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.sticky{position:sticky;top:env(safe-area-inset-top,0px);z-index:20}
+.top{background:var(--dora);color:var(--on-dora);border-bottom:7px solid var(--collar);box-shadow:0 2px 10px rgba(0,0,0,.18)}
 .brand{display:flex;align-items:center;gap:12px}
 .brand>div{min-width:0}
 .bell{position:relative;width:26px;height:26px;border-radius:50%;flex:none;background:var(--bell);border:1.5px solid var(--bell-ink);box-shadow:0 0 0 3px var(--on-dora)}
@@ -63,9 +64,11 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .btn.danger{color:var(--warn)}
 .btn.sm{padding:5px 10px;font-size:13px}
 
-.bar{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
-.bar label{display:flex;gap:6px;align-items:center;font-size:14px;color:var(--muted)}
-.bar select{padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface)}
+.filters{background:var(--bg);border-bottom:1px solid var(--line);box-shadow:0 4px 10px rgba(10,60,100,.10)}
+.filters .wrap{padding-block:8px;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.bar{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.filters label{display:flex;gap:6px;align-items:center;font-size:14px;color:var(--muted)}
+.filters select{padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface)}
 .count{margin-left:auto;font-size:13px;color:var(--muted)}
 .count b{font-family:var(--font-num);color:var(--fg)}
 .tools{display:flex;gap:8px;flex-wrap:wrap}
@@ -134,8 +137,8 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
   .facts{order:-1;border-bottom:1px solid var(--line)}
   .styles{border-right:0}
   .styles img{max-height:140px}
-  .bar label{flex:1 1 140px}
-  .bar select{flex:1;min-width:0}
+  .filters label{flex:1 1 140px;min-width:0}
+  .filters select{flex:1;min-width:0}
   .tools .btn{padding:5px 8px;font-size:12px}
   .db{grid-template-columns:1fr}
   .count{margin-left:0;width:100%}
@@ -145,6 +148,7 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
 </style>
 </head>
 <body>
+<div class="sticky">
 <header class="top">
   <div class="wrap">
     <div class="brand"><span class="bell" aria-hidden="true"></span><div><h1>客戶貼紙查詢</h1><span>貼紙樣式・張貼位置・數量・字模・滾字位置</span></div></div>
@@ -154,15 +158,18 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
     </div>
   </div>
 </header>
-
-<main class="wrap">
-  <div class="bar">
+<div class="filters"><div class="wrap">
     <label>張貼位置
       <select id="fPaste"><option value="">全部</option><option value="頭邊">頭邊</option><option value="中間">中間</option><option value="旁邊">旁邊</option><option value="none">不貼／無</option></select>
     </label>
     <label>滾字位置
       <select id="fRoll"><option value="">全部</option><option value="中間">中間</option><option value="頭邊">頭邊</option><option value="none">未記錄／不滾字</option></select>
     </label>
+</div></div>
+</div>
+
+<main class="wrap">
+  <div class="bar">
     <div class="tools">
       <button class="btn sm" id="exportCsv" type="button">匯出 CSV（Excel）</button>
       <button class="btn sm" id="reload" type="button">重新整理</button>
