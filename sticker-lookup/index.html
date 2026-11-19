@@ -83,6 +83,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .banner>div{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
 .fmsg{flex:1 1 200px;align-self:center;font-size:13px;color:var(--muted)}
 .fmsg.err{color:var(--warn)}
+.f .fmsg{flex:none}
 .head .acts{margin-left:auto;display:flex;gap:6px}
 .body{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:0}
 .styles{padding:12px 14px;display:flex;flex-direction:column;gap:10px;border-right:1px solid var(--line)}
@@ -108,6 +109,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .note-foot{font-size:12px;color:var(--muted);margin:-24px 0 32px}
 
 dialog{border:1px solid var(--line);border-radius:12px;padding:0;background:var(--surface);color:var(--fg);width:min(640px,calc(100vw - 32px));max-height:calc(100dvh - 32px)}
+dialog.pw{width:min(400px,calc(100vw - 32px))}
 dialog::backdrop{background:rgba(10,15,20,.55)}
 dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
 .dh{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
@@ -170,7 +172,7 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
   </div>
   <div class="banner" id="banner" role="status" hidden></div>
   <div class="list" id="list"><div class="empty-list">資料載入中…</div></div>
-  <p class="note-foot">資料來源：《20160714字模統計》貼紙工作表；網頁上新增的客戶存在共用資料庫，所有人都看得到。新增後如需修改或刪除，請聯絡管理者在 Supabase 後台處理。</p>
+  <p class="note-foot">資料來源：《20160714字模統計》貼紙工作表；網頁上新增與修改的內容存在共用資料庫，所有人都看得到。修改、刪除或還原需輸入共用編輯密碼。</p>
 </main>
 
 <dialog id="dlg" aria-labelledby="dlgTitle">
@@ -219,7 +221,7 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
       <div class="f full">
         <label for="iImg">貼紙樣式圖片</label>
         <input id="iImg" type="file" accept="image/*" multiple>
-        <small>最多 3 張，系統會自動縮小後上傳。</small>
+        <small>最多 5 張，系統會自動縮小後上傳；按 × 可移除。</small>
         <div class="thumbs" id="thumbs"></div>
       </div>
       <div class="f full">
@@ -229,8 +231,25 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
     </div>
     <div class="df">
       <small id="formMsg" class="fmsg" role="status"></small>
+      <button class="btn danger" type="button" id="delBtn" hidden>刪除</button>
       <button class="btn" type="button" data-close>取消</button>
       <button class="btn primary" type="submit" id="saveBtn">儲存</button>
+    </div>
+  </form>
+</dialog>
+<dialog id="pwDlg" class="pw" aria-labelledby="pwTitle">
+  <form id="pwForm" method="dialog" novalidate>
+    <div class="dh"><h3 id="pwTitle">輸入編輯密碼</h3></div>
+    <div class="db">
+      <div class="f full">
+        <label for="pwInput">修改資料需要共用編輯密碼，關閉此分頁後需重新輸入。</label>
+        <input id="pwInput" type="password" autocomplete="current-password" required>
+        <small id="pwMsg" class="fmsg" role="status"></small>
+      </div>
+    </div>
+    <div class="df">
+      <button class="btn" type="button" onclick="this.closest('dialog').close()">取消</button>
+      <button class="btn primary" type="submit" id="pwOk">確定</button>
     </div>
   </form>
 </dialog>
@@ -242,14 +261,25 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
   const TABLE = 'sticker_customers';
   const FIELDS = ['name','sticker','paste','roll','qty','mold','moldL','moldM','moldS','note'];
   const COL = { moldL: 'mold_l', moldM: 'mold_m', moldS: 'mold_s' };
-  const MAX_IMGS = 3;
+  const MAX_IMGS = 5;
+  const PW_KEY = 'sticker-lookup.pw';              // 共用編輯密碼，只留在目前分頁（關閉分頁即清除）
   const $ = s => document.querySelector(s);
-  let base = [], shared = [], legacy = [], client = null, dbError = '', pendingImgs = [], submitting = false;
+  let base = [], shared = [], overrides = new Map(), legacy = [], client = null, dbError = '';
+  let pendingImgs = [], submitting = false, editing = null;
 
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const norm = v => String(v ?? '').toLowerCase().replace(/[\s()（）.．、\/\-]/g, '');
-  const safeImg = v => typeof v === 'string' && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(v);
-  const all = () => [...legacy, ...shared, ...base];
+  // 只顯示縮小後的 base64 圖片，或網站內 Excel 原有圖片（img/015.jpg）
+  const safeImg = v => typeof v === 'string' && /^(data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+|img\/\d{3}\.jpg)$/.test(v);
+  // Excel 客戶若在資料庫有修改紀錄（base_id），以修改後的內容顯示
+  function applyOverride(c){
+    const o = overrides.get(c.id);
+    if (!o) return c;
+    const labels = new Map((c.styles || []).map(s => [s.img, s.label]));
+    return { ...c, ...o, id: c.id, db: false, no: c.no, place: c.place, posRaw: '',
+      styles: o.styles.map(s => ({ img: s.img, label: labels.get(s.img) || s.label })) };
+  }
+  const all = () => [...legacy, ...shared, ...base.map(applyOverride)];
 
   function toast(msg){
     const t = $('#toast'); t.textContent = msg; t.hidden = false;
@@ -267,7 +297,7 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
     });
   }
   const fromRow = r => ({
-    id: 'db-' + r.id, db: true, created: r.created_at, no: '',
+    id: 'db-' + r.id, dbId: r.id, db: true, created: r.created_at, edited: r.updated_at || '', no: '',
     name: r.name, sticker: r.sticker, paste: r.paste, roll: r.roll, qty: r.qty, mold: r.mold,
     moldL: r.mold_l, moldM: r.mold_m, moldS: r.mold_s, note: r.note, posRaw: '', place: [],
     styles: (Array.isArray(r.images) ? r.images : []).filter(safeImg).map(img => ({ img, label: r.sticker })),
@@ -282,10 +312,13 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
     if (!client){ dbError = dbError || '無法建立資料庫連線'; return; }
     try {
       const { data, error } = await client.from(TABLE)
-        .select('id,created_at,name,sticker,paste,roll,qty,mold,mold_l,mold_m,mold_s,note,images')
+        .select('*')
         .order('created_at', { ascending: false }).limit(2000);
       if (error) throw error;
-      shared = (data || []).map(fromRow); dbError = '';
+      const rows = data || [];
+      shared = rows.filter(r => !r.base_id).map(fromRow);
+      overrides = new Map(rows.filter(r => r.base_id).map(r => [r.base_id, fromRow(r)]));
+      dbError = '';
     } catch (e) {
       dbError = e.message || '連線異常';
     }
@@ -301,7 +334,7 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
 
   function renderBanner(){
     const b = $('#banner'), parts = [];
-    if (dbError) parts.push(`<div><span>無法連線共用資料庫，目前只顯示 Excel 資料，暫時不能新增客戶。（${esc(dbError)}）</span><button class="btn sm" type="button" data-retry>再試一次</button></div>`);
+    if (dbError) parts.push(`<div><span>無法連線共用資料庫，目前只顯示 Excel 原始資料，暫時不能新增或修改。（${esc(dbError)}）</span><button class="btn sm" type="button" data-retry>再試一次</button></div>`);
     if (legacy.length) parts.push(`<div><span>這台裝置有 <b>${legacy.length}</b> 筆先前只存在瀏覽器的新增客戶，尚未放進共用資料庫。</span>${client && !dbError ? '<button class="btn sm primary" type="button" data-upload-all>全部上傳</button>' : ''}</div>`);
     b.innerHTML = parts.join(''); b.hidden = !parts.length;
   }
@@ -345,8 +378,10 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
         <h2>${esc(c.name)}</h2>
         ${c.sticker && c.sticker !== c.name ? `<span class="chip">貼紙：${esc(c.sticker)}</span>` : ''}
         ${c.db ? `<span class="chip shared">共用新增 ${esc(day(c.created))}</span>` : ''}
+        ${c.edited ? `<span class="chip shared">已修改 ${esc(day(c.edited))}</span>` : ''}
         ${c.local ? '<span class="chip local">僅本機・未上傳</span>' : ''}
-        ${c.local ? `<span class="acts">${client && !dbError ? `<button class="btn sm" type="button" data-upload="${esc(c.id)}">上傳</button>` : ''}<button class="btn sm danger" type="button" data-del="${esc(c.id)}">刪除</button></span>` : ''}
+        ${c.local ? `<span class="acts">${client && !dbError ? `<button class="btn sm" type="button" data-upload="${esc(c.id)}">上傳</button>` : ''}<button class="btn sm danger" type="button" data-del="${esc(c.id)}">刪除</button></span>`
+          : client && !dbError ? `<span class="acts"><button class="btn sm" type="button" data-edit="${esc(c.id)}">編輯</button></span>` : ''}
       </div>
       <div class="body">
         <div class="styles">${styles}</div>
@@ -364,15 +399,58 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
     </article>`;
   }
 
-  // ---- 新增 ----
+  // ---- 新增／修改 ----
   const dlg = $('#dlg'), form = $('#form');
   function formMsg(text, err){ const m = $('#formMsg'); m.textContent = text; m.className = 'fmsg' + (err ? ' err' : ''); }
-  function openForm(presetName){
-    if (dbError || !client) return toast('目前無法連線共用資料庫，暫時不能新增客戶');
-    form.reset(); formMsg('儲存後所有人都看得到。');
-    if (presetName) form.elements.name.value = presetName;
-    pendingImgs = []; drawThumbs(); checkName();
+  function openForm(presetName, rec){
+    if (dbError || !client) return toast('目前無法連線共用資料庫，暫時不能新增或修改');
+    editing = rec || null;
+    form.reset();
+    $('#dlgTitle').textContent = rec ? `修改：${rec.name}` : '新增客戶';
+    formMsg(rec ? '修改後所有人都會看到新的內容。' : '儲存後所有人都看得到。');
+    for (const k of FIELDS) form.elements[k].value = rec ? (rec[k] || '') : '';
+    if (!rec && presetName) form.elements.name.value = presetName;
+    pendingImgs = rec ? (rec.styles || []).map(s => s.img).filter(safeImg).slice(0, MAX_IMGS) : [];
+    const del = $('#delBtn');
+    del.hidden = !(rec && rec.dbId);
+    del.textContent = rec?.db ? '刪除這筆客戶' : '還原成 Excel 原始資料';
+    drawThumbs(); checkName();
     dlg.showModal(); form.elements.name.focus();
+  }
+
+  // 共用編輯密碼：驗證後存在 sessionStorage，關閉分頁即需重新輸入
+  const getPw = () => { try { return sessionStorage.getItem(PW_KEY) || ''; } catch { return ''; } };
+  const setPw = v => { try { v ? sessionStorage.setItem(PW_KEY, v) : sessionStorage.removeItem(PW_KEY); } catch {} };
+  const isPwError = err => /編輯密碼錯誤/.test(err?.message || '');
+  function askPw(){
+    const d = $('#pwDlg'), f = $('#pwForm'), inp = $('#pwInput'), msg = $('#pwMsg');
+    f.reset(); msg.textContent = ''; msg.className = 'fmsg';
+    d.showModal(); inp.focus();
+    return new Promise(done => {
+      const finish = v => { f.onsubmit = null; d.onclose = null; if (d.open) d.close(); done(v); };
+      d.onclose = () => finish('');
+      f.onsubmit = async e => {
+        e.preventDefault();
+        const pw = inp.value;
+        if (!pw) return;
+        $('#pwOk').disabled = true; msg.textContent = '驗證中…';
+        try {
+          const { data, error } = await client.rpc('sticker_check_password', { p_password: pw });
+          if (error) throw error;
+          if (data === true){ setPw(pw); return finish(pw); }
+          msg.textContent = '密碼錯誤，請再試一次。'; msg.className = 'fmsg err'; inp.select();
+        } catch (err) {
+          msg.textContent = `無法驗證密碼（${err.message || '連線異常'}）`; msg.className = 'fmsg err';
+        } finally { $('#pwOk').disabled = false; }
+      };
+    });
+  }
+  async function needPw(){ return getPw() || await askPw(); }
+  async function startEdit(id){
+    const rec = all().find(c => c.id === id);
+    if (!rec) return;
+    if (!(await needPw())) return;
+    openForm('', rec);
   }
   function drawThumbs(){
     $('#thumbs').innerHTML = pendingImgs.map((src, i) => `<div><img src="${src}" alt="預覽 ${i + 1}"><button type="button" data-rm="${i}" aria-label="移除圖片 ${i + 1}">×</button></div>`).join('');
@@ -380,7 +458,7 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
   }
   function checkName(){
     const n = norm(form.elements.name.value), msg = $('#nameMsg');
-    const dup = n ? all().filter(c => norm(c.name) === n) : [];
+    const dup = n ? all().filter(c => c.id !== editing?.id && norm(c.name) === n) : [];
     msg.className = '';
     msg.textContent = dup.length ? `提醒：已有 ${dup.length} 筆同名客戶資料，仍可儲存為另一款。` : '';
   }
@@ -427,18 +505,53 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
     if (!navigator.onLine) return formMsg('目前離線，尚未儲存。請連線後再按儲存。', true);
     const rec = {}; for (const k of FIELDS) rec[k] = form.elements[k].value.trim();
     rec.styles = pendingImgs.map(img => ({ img }));
-    submitting = true; $('#saveBtn').disabled = true; $('#saveBtn').textContent = '儲存中…'; formMsg('正在儲存到共用資料庫…');
+    const target = editing;
+    busy(true, '正在儲存到共用資料庫…');
     try {
-      await insert(rec);
+      if (target){
+        const { error } = await client.rpc('sticker_save', {
+          p_password: getPw(), p_id: target.db ? target.dbId : null,
+          p_base_id: target.db ? null : target.id, p_data: toRow(rec) });
+        if (error) throw error;
+      } else {
+        await insert(rec);
+      }
       dlg.close();
       await loadShared();
       $('#q').value = name; render();
-      toast(`已新增「${name}」，所有人都看得到`);
+      toast(target ? `已更新「${name}」` : `已新增「${name}」，所有人都看得到`);
     } catch (err) {
-      formMsg(`儲存未確認成功，已保留填寫內容。請先關閉視窗按「重新整理」確認是否已新增，避免重複。（${err.message || '連線異常'}）`, true);
-    } finally {
-      submitting = false; $('#saveBtn').disabled = false; $('#saveBtn').textContent = '儲存';
-    }
+      if (isPwError(err)){ setPw(''); formMsg('編輯密碼錯誤或已變更，請按「儲存」重新輸入密碼。', true); }
+      else formMsg(`儲存未確認成功，已保留填寫內容。請先關閉視窗按「重新整理」確認${target ? '是否已更新' : '是否已新增，避免重複'}。（${err.message || '連線異常'}）`, true);
+    } finally { busy(false); }
+  });
+  function busy(on, msg){
+    submitting = on;
+    for (const id of ['#saveBtn', '#delBtn']) $(id).disabled = on;
+    $('#saveBtn').textContent = on ? '儲存中…' : '儲存';
+    if (msg) formMsg(msg);
+  }
+  // 儲存修改前若沒有密碼（例如密碼錯誤被清除），先要求輸入
+  $('#saveBtn').addEventListener('click', async e => {
+    if (!editing || getPw()) return;
+    e.preventDefault();
+    if (await needPw()) form.requestSubmit();
+  });
+  $('#delBtn').addEventListener('click', async () => {
+    const target = editing; if (!target?.dbId || submitting) return;
+    const what = target.db ? `刪除「${target.name}」？刪除後所有人都看不到這筆資料。` : `把「${target.name}」還原成 Excel 原始資料？目前的修改會被捨棄。`;
+    if (!confirm(`確定要${what}`)) return;
+    if (!getPw() && !(await needPw())) return;
+    busy(true, '處理中…');
+    try {
+      const { error } = await client.rpc('sticker_delete', { p_password: getPw(), p_id: target.dbId });
+      if (error) throw error;
+      dlg.close(); await loadShared(); render();
+      toast(target.db ? `已刪除「${target.name}」` : `已還原「${target.name}」`);
+    } catch (err) {
+      if (isPwError(err)){ setPw(''); formMsg('編輯密碼錯誤或已變更，請再按一次並重新輸入密碼。', true); }
+      else formMsg(`未完成（${err.message || '連線異常'}），請重新整理確認。`, true);
+    } finally { busy(false); }
   });
 
   async function uploadLegacy(items){
@@ -455,6 +568,7 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
   document.addEventListener('click', async e => {
     const b = e.target.closest('#list button, #banner button'); if (!b) return;
     if (b.dataset.addName != null) return openForm(b.dataset.addName);
+    if (b.dataset.edit) return startEdit(b.dataset.edit);
     if (b.hasAttribute('data-retry')){ b.disabled = true; return refresh(); }
     if (b.hasAttribute('data-upload-all')){ b.disabled = true; return uploadLegacy(legacy.slice()); }
     if (b.dataset.upload){ b.disabled = true; return uploadLegacy(legacy.filter(c => c.id === b.dataset.upload)); }
@@ -468,10 +582,10 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
 
   // ---- 匯出 ----
   $('#exportCsv').addEventListener('click', () => {
-    const head = ['編號','客戶名稱','貼紙公司名','張貼位置','滾字位置','數量','字模','廠商字模(大)','年字模(中)','月字模(小)','備註','原始位置記錄','來源','新增時間'];
+    const head = ['編號','客戶名稱','貼紙公司名','張貼位置','滾字位置','數量','字模','廠商字模(大)','年字模(中)','月字模(小)','備註','原始位置記錄','來源','新增時間','修改時間'];
     const cell = v => /[",\n]/.test(v = String(v ?? '')) ? `"${v.replace(/"/g, '""')}"` : v;
     const lines = all().map(c => [c.no, c.name, c.sticker, c.paste, c.roll, c.qty, c.mold, c.moldL, c.moldM, c.moldS, c.note, c.posRaw,
-      c.db ? '共用新增' : c.local ? '本機未上傳' : 'Excel', c.created ? new Date(c.created).toLocaleString('zh-TW') : ''].map(cell).join(','));
+      c.db ? '共用新增' : c.local ? '本機未上傳' : c.edited ? 'Excel（已修改）' : 'Excel', c.created ? new Date(c.created).toLocaleString('zh-TW') : '', c.edited ? new Date(c.edited).toLocaleString('zh-TW') : ''].map(cell).join(','));
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob(['﻿' + [head.join(','), ...lines].join('\r\n')], { type: 'text/csv;charset=utf-8' }));
     a.download = `客戶貼紙-${new Date().toLocaleDateString('sv-SE')}.csv`;
