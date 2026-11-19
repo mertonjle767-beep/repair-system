@@ -1,16 +1,13 @@
--- 客戶貼紙查詢：共用資料表、修改功能與編輯密碼。於 Supabase SQL Editor 執行。
--- 本檔可重複執行：第一次會建立資料表；已執行過舊版本也可直接再執行一次以加入修改功能。
--- 重新執行時資料不會被清除，但會以下方 pw 的值重設編輯密碼。
+-- 客戶貼紙查詢：共用資料表與修改功能。於 Supabase SQL Editor 執行。
+-- 本檔可重複執行：第一次會建立資料表；已執行過舊版本（含編輯密碼版本）也可直接再執行一次升級，資料不會被清除。
 --
--- ★ 執行前請先把最下方 pw 的值改成你們的共用編輯密碼（至少 6 個字）。
+-- 示範版不需密碼：任何能開啟網頁的人都可以新增、修改、刪除或還原資料。
+-- 修改一律經由下方函式，只能改可填寫的欄位；資料格式仍由 CHECK 把關。
 --
 -- 資料分兩種：
 --   1. base_id 為空：網頁上新增的客戶。
 --   2. base_id 有值（例如 x34）：修改過的 Excel 原有客戶，網頁以這筆取代 data.json 中同編號的資料。
 begin;
-
-create schema if not exists extensions;
-create extension if not exists pgcrypto with schema extensions;
 
 create table if not exists public.sticker_customers (
     id uuid primary key default gen_random_uuid(),
@@ -64,7 +61,7 @@ alter table public.sticker_customers
     add constraint sticker_customers_base_id_check check (base_id is null or base_id ~ '^x[0-9]{1,4}$');
 
 -- GRANT：未登入訪客（anon）可讀取，並可新增客戶（不含 base_id、id、時間欄位）；
--- 不直接授予修改或刪除，修改一律經由下方檢查密碼的函式。
+-- 不直接授予修改或刪除，修改一律經由下方函式，避免改動 id、base_id 或建立時間。
 revoke all privileges on table public.sticker_customers from public, anon, authenticated;
 grant usage on schema public to anon;
 grant select on table public.sticker_customers to anon;
@@ -80,43 +77,18 @@ create policy sticker_customers_anon_select
 create policy sticker_customers_anon_insert
     on public.sticker_customers for insert to anon with check (base_id is null);
 
--- 編輯密碼：只存 bcrypt 雜湊，放在 API 不公開的 private schema。
-create schema if not exists private;
-revoke all on schema private from public, anon, authenticated;
-create table if not exists private.sticker_admin (
-    id int primary key default 1 check (id = 1),
-    password_hash text not null,
-    updated_at timestamptz not null default now()
-);
-revoke all on table private.sticker_admin from public, anon, authenticated;
-
-create or replace function private.sticker_password_ok(p_password text)
-returns boolean language plpgsql security definer set search_path = '' as $$
-declare h text;
-begin
-    select password_hash into h from private.sticker_admin where id = 1;
-    if h is null or p_password is null or extensions.crypt(p_password, h) <> h then
-        perform pg_sleep(1);  -- 減緩猜密碼
-        return false;
-    end if;
-    return true;
-end $$;
-revoke all on function private.sticker_password_ok(text) from public, anon, authenticated;
-
--- 檢查密碼（網頁進入編輯前使用）。
-create or replace function public.sticker_check_password(p_password text)
-returns boolean language sql security definer set search_path = '' as $$
-    select private.sticker_password_ok(p_password);
-$$;
+-- 移除舊版的編輯密碼函式與資料（若曾執行過密碼版本）。
+drop function if exists public.sticker_check_password(text);
+drop function if exists public.sticker_save(text, uuid, text, jsonb);
+drop function if exists public.sticker_delete(text, uuid);
+drop function if exists private.sticker_password_ok(text);
+drop table if exists private.sticker_admin;
 
 -- 儲存修改：p_id 為資料庫中的資料列；p_base_id 為 Excel 原有客戶（第一次修改時新增覆寫列）。
-create or replace function public.sticker_save(p_password text, p_id uuid, p_base_id text, p_data jsonb)
+create or replace function public.sticker_save(p_id uuid, p_base_id text, p_data jsonb)
 returns uuid language plpgsql security definer set search_path = '' as $$
 declare v_id uuid;
 begin
-    if not private.sticker_password_ok(p_password) then
-        raise exception '編輯密碼錯誤' using errcode = '28P01';
-    end if;
     if p_id is not null then
         update public.sticker_customers set
             name = coalesce(p_data->>'name', ''), sticker = coalesce(p_data->>'sticker', ''),
@@ -148,33 +120,15 @@ begin
 end $$;
 
 -- 刪除：網頁新增的客戶會被刪除；修改過的 Excel 客戶則還原成 Excel 原始資料。
-create or replace function public.sticker_delete(p_password text, p_id uuid)
+create or replace function public.sticker_delete(p_id uuid)
 returns void language plpgsql security definer set search_path = '' as $$
 begin
-    if not private.sticker_password_ok(p_password) then
-        raise exception '編輯密碼錯誤' using errcode = '28P01';
-    end if;
     delete from public.sticker_customers where id = p_id;
 end $$;
 
-revoke all on function public.sticker_check_password(text) from public;
-revoke all on function public.sticker_save(text, uuid, text, jsonb) from public;
-revoke all on function public.sticker_delete(text, uuid) from public;
-grant execute on function public.sticker_check_password(text) to anon;
-grant execute on function public.sticker_save(text, uuid, text, jsonb) to anon;
-grant execute on function public.sticker_delete(text, uuid) to anon;
-
--- ★ 設定／變更共用編輯密碼：把 pw 的值改成至少 6 個字的密碼再執行。
--- 之後若要換密碼，只要單獨再執行這一段 do $$ … $$; 即可。
-do $$
-declare pw text := '請在這裡輸入編輯密碼';
-begin
-    if pw = '請在這裡輸入編輯密碼' or char_length(pw) < 6 then
-        raise exception '請先把 pw 改成至少 6 個字的編輯密碼，再執行本檔';
-    end if;
-    insert into private.sticker_admin (id, password_hash)
-    values (1, extensions.crypt(pw, extensions.gen_salt('bf')))
-    on conflict (id) do update set password_hash = excluded.password_hash, updated_at = now();
-end $$;
+revoke all on function public.sticker_save(uuid, text, jsonb) from public;
+revoke all on function public.sticker_delete(uuid) from public;
+grant execute on function public.sticker_save(uuid, text, jsonb) to anon;
+grant execute on function public.sticker_delete(uuid) to anon;
 
 commit;

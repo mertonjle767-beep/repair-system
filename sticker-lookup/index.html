@@ -109,7 +109,6 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .note-foot{font-size:12px;color:var(--muted);margin:-24px 0 32px}
 
 dialog{border:1px solid var(--line);border-radius:12px;padding:0;background:var(--surface);color:var(--fg);width:min(640px,calc(100vw - 32px));max-height:calc(100dvh - 32px)}
-dialog.pw{width:min(400px,calc(100vw - 32px))}
 dialog::backdrop{background:rgba(10,15,20,.55)}
 dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
 .dh{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
@@ -172,7 +171,7 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
   </div>
   <div class="banner" id="banner" role="status" hidden></div>
   <div class="list" id="list"><div class="empty-list">資料載入中…</div></div>
-  <p class="note-foot">資料來源：《20160714字模統計》貼紙工作表；網頁上新增與修改的內容存在共用資料庫，所有人都看得到。修改、刪除或還原需輸入共用編輯密碼。</p>
+  <p class="note-foot">資料來源：《20160714字模統計》貼紙工作表；網頁上新增與修改的內容存在共用資料庫，所有人都看得到。任何人都可以修改、刪除或還原，請小心操作。</p>
 </main>
 
 <dialog id="dlg" aria-labelledby="dlgTitle">
@@ -237,22 +236,6 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
     </div>
   </form>
 </dialog>
-<dialog id="pwDlg" class="pw" aria-labelledby="pwTitle">
-  <form id="pwForm" method="dialog" novalidate>
-    <div class="dh"><h3 id="pwTitle">輸入編輯密碼</h3></div>
-    <div class="db">
-      <div class="f full">
-        <label for="pwInput">修改資料需要共用編輯密碼，關閉此分頁後需重新輸入。</label>
-        <input id="pwInput" type="password" autocomplete="current-password" required>
-        <small id="pwMsg" class="fmsg" role="status"></small>
-      </div>
-    </div>
-    <div class="df">
-      <button class="btn" type="button" onclick="this.closest('dialog').close()">取消</button>
-      <button class="btn primary" type="submit" id="pwOk">確定</button>
-    </div>
-  </form>
-</dialog>
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script>
@@ -262,7 +245,6 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
   const FIELDS = ['name','sticker','paste','roll','qty','mold','moldL','moldM','moldS','note'];
   const COL = { moldL: 'mold_l', moldM: 'mold_m', moldS: 'mold_s' };
   const MAX_IMGS = 5;
-  const PW_KEY = 'sticker-lookup.pw';              // 共用編輯密碼，只留在目前分頁（關閉分頁即清除）
   const $ = s => document.querySelector(s);
   let base = [], shared = [], overrides = new Map(), legacy = [], client = null, dbError = '';
   let pendingImgs = [], submitting = false, editing = null;
@@ -418,38 +400,9 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
     dlg.showModal(); form.elements.name.focus();
   }
 
-  // 共用編輯密碼：驗證後存在 sessionStorage，關閉分頁即需重新輸入
-  const getPw = () => { try { return sessionStorage.getItem(PW_KEY) || ''; } catch { return ''; } };
-  const setPw = v => { try { v ? sessionStorage.setItem(PW_KEY, v) : sessionStorage.removeItem(PW_KEY); } catch {} };
-  const isPwError = err => /編輯密碼錯誤/.test(err?.message || '');
-  function askPw(){
-    const d = $('#pwDlg'), f = $('#pwForm'), inp = $('#pwInput'), msg = $('#pwMsg');
-    f.reset(); msg.textContent = ''; msg.className = 'fmsg';
-    d.showModal(); inp.focus();
-    return new Promise(done => {
-      const finish = v => { f.onsubmit = null; d.onclose = null; if (d.open) d.close(); done(v); };
-      d.onclose = () => finish('');
-      f.onsubmit = async e => {
-        e.preventDefault();
-        const pw = inp.value;
-        if (!pw) return;
-        $('#pwOk').disabled = true; msg.textContent = '驗證中…';
-        try {
-          const { data, error } = await client.rpc('sticker_check_password', { p_password: pw });
-          if (error) throw error;
-          if (data === true){ setPw(pw); return finish(pw); }
-          msg.textContent = '密碼錯誤，請再試一次。'; msg.className = 'fmsg err'; inp.select();
-        } catch (err) {
-          msg.textContent = `無法驗證密碼（${err.message || '連線異常'}）`; msg.className = 'fmsg err';
-        } finally { $('#pwOk').disabled = false; }
-      };
-    });
-  }
-  async function needPw(){ return getPw() || await askPw(); }
   async function startEdit(id){
     const rec = all().find(c => c.id === id);
     if (!rec) return;
-    if (!(await needPw())) return;
     openForm('', rec);
   }
   function drawThumbs(){
@@ -510,7 +463,7 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
     try {
       if (target){
         const { error } = await client.rpc('sticker_save', {
-          p_password: getPw(), p_id: target.db ? target.dbId : null,
+          p_id: target.db ? target.dbId : null,
           p_base_id: target.db ? null : target.id, p_data: toRow(rec) });
         if (error) throw error;
       } else {
@@ -521,8 +474,7 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
       $('#q').value = name; render();
       toast(target ? `已更新「${name}」` : `已新增「${name}」，所有人都看得到`);
     } catch (err) {
-      if (isPwError(err)){ setPw(''); formMsg('編輯密碼錯誤或已變更，請按「儲存」重新輸入密碼。', true); }
-      else formMsg(`儲存未確認成功，已保留填寫內容。請先關閉視窗按「重新整理」確認${target ? '是否已更新' : '是否已新增，避免重複'}。（${err.message || '連線異常'}）`, true);
+      formMsg(`儲存未確認成功，已保留填寫內容。請先關閉視窗按「重新整理」確認${target ? '是否已更新' : '是否已新增，避免重複'}。（${err.message || '連線異常'}）`, true);
     } finally { busy(false); }
   });
   function busy(on, msg){
@@ -531,26 +483,18 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
     $('#saveBtn').textContent = on ? '儲存中…' : '儲存';
     if (msg) formMsg(msg);
   }
-  // 儲存修改前若沒有密碼（例如密碼錯誤被清除），先要求輸入
-  $('#saveBtn').addEventListener('click', async e => {
-    if (!editing || getPw()) return;
-    e.preventDefault();
-    if (await needPw()) form.requestSubmit();
-  });
   $('#delBtn').addEventListener('click', async () => {
     const target = editing; if (!target?.dbId || submitting) return;
     const what = target.db ? `刪除「${target.name}」？刪除後所有人都看不到這筆資料。` : `把「${target.name}」還原成 Excel 原始資料？目前的修改會被捨棄。`;
     if (!confirm(`確定要${what}`)) return;
-    if (!getPw() && !(await needPw())) return;
     busy(true, '處理中…');
     try {
-      const { error } = await client.rpc('sticker_delete', { p_password: getPw(), p_id: target.dbId });
+      const { error } = await client.rpc('sticker_delete', { p_id: target.dbId });
       if (error) throw error;
       dlg.close(); await loadShared(); render();
       toast(target.db ? `已刪除「${target.name}」` : `已還原「${target.name}」`);
     } catch (err) {
-      if (isPwError(err)){ setPw(''); formMsg('編輯密碼錯誤或已變更，請再按一次並重新輸入密碼。', true); }
-      else formMsg(`未完成（${err.message || '連線異常'}），請重新整理確認。`, true);
+      formMsg(`未完成（${err.message || '連線異常'}），請重新整理確認。`, true);
     } finally { busy(false); }
   });
 
