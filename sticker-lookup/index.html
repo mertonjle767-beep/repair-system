@@ -10,6 +10,8 @@
 <meta name="description" content="依客戶名稱查詢貼紙樣式、張貼位置、數量、字模與滾字位置，並可新增客戶。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script src="../vendor/supabase-2.99.1.js"></script>
+<script src="../config.js"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
 :root{
@@ -64,6 +66,11 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .no{font-family:var(--font-num);font-size:12px;color:var(--muted)}
 .chip{font-size:12px;padding:1px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:700}
 .chip.local{background:var(--local-soft);color:var(--local)}
+.chip.shared{background:var(--surface);color:var(--muted);border:1px solid var(--line);font-weight:500}
+.banner{margin-top:12px;padding:10px 14px;border-radius:8px;border:1px solid var(--local);background:var(--local-soft);color:var(--fg);font-size:14px;display:grid;gap:8px}
+.banner>div{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
+.fmsg{flex:1 1 200px;align-self:center;font-size:13px;color:var(--muted)}
+.fmsg.err{color:var(--warn)}
 .head .acts{margin-left:auto;display:flex;gap:6px}
 .body{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:0}
 .styles{padding:12px 14px;display:flex;flex-direction:column;gap:10px;border-right:1px solid var(--line)}
@@ -145,14 +152,13 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
     </label>
     <div class="tools">
       <button class="btn sm" id="exportCsv" type="button">匯出 CSV（Excel）</button>
-      <button class="btn sm" id="exportJson" type="button">備份新增客戶</button>
-      <button class="btn sm" id="importJson" type="button">匯入備份</button>
-      <input id="importFile" type="file" accept="application/json,.json" hidden>
+      <button class="btn sm" id="reload" type="button">重新整理</button>
     </div>
     <div class="count" id="count" aria-live="polite"></div>
   </div>
+  <div class="banner" id="banner" role="status" hidden></div>
   <div class="list" id="list"><div class="empty-list">資料載入中…</div></div>
-  <p class="note-foot">資料來源：《20160714字模統計》貼紙工作表。新增的客戶只存在目前這台裝置的瀏覽器，請定期用「備份新增客戶」匯出，換裝置時再匯入。</p>
+  <p class="note-foot">資料來源：《20160714字模統計》貼紙工作表；網頁上新增的客戶存在共用資料庫，所有人都看得到。新增後如需修改或刪除，請聯絡管理者在 Supabase 後台處理。</p>
 </main>
 
 <dialog id="dlg" aria-labelledby="dlgTitle">
@@ -201,7 +207,7 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
       <div class="f full">
         <label for="iImg">貼紙樣式圖片</label>
         <input id="iImg" type="file" accept="image/*" multiple>
-        <small>可上傳多張，系統會自動縮小後存在此瀏覽器。</small>
+        <small>最多 3 張，系統會自動縮小後上傳。</small>
         <div class="thumbs" id="thumbs"></div>
       </div>
       <div class="f full">
@@ -210,6 +216,7 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
       </div>
     </div>
     <div class="df">
+      <small id="formMsg" class="fmsg" role="status"></small>
       <button class="btn" type="button" data-close>取消</button>
       <button class="btn primary" type="submit" id="saveBtn">儲存</button>
     </div>
@@ -219,26 +226,73 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
 
 <script>
 (() => {
-  const KEY = 'sticker-lookup.added.v1';
+  const LEGACY_KEY = 'sticker-lookup.added.v1';   // 改用資料庫前存在瀏覽器的新增客戶
+  const TABLE = 'sticker_customers';
+  const FIELDS = ['name','sticker','paste','roll','qty','mold','moldL','moldM','moldS','note'];
+  const COL = { moldL: 'mold_l', moldM: 'mold_m', moldS: 'mold_s' };
+  const MAX_IMGS = 3;
   const $ = s => document.querySelector(s);
-  let base = [], added = [], editing = null, pendingImgs = [];
+  let base = [], shared = [], legacy = [], client = null, dbError = '', pendingImgs = [], submitting = false;
 
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const norm = v => String(v ?? '').toLowerCase().replace(/[\s()（）.．、\/\-]/g, '');
+  const safeImg = v => typeof v === 'string' && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(v);
+  const all = () => [...legacy, ...shared, ...base];
 
-  function loadAdded(){
-    try { const v = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(v) ? v : []; }
-    catch { return []; }
-  }
-  function saveAdded(){
-    try { localStorage.setItem(KEY, JSON.stringify(added)); return true; }
-    catch (e) { toast('儲存失敗：瀏覽器空間不足或已停用儲存，請減少圖片或先匯出備份。'); return false; }
-  }
   function toast(msg){
     const t = $('#toast'); t.textContent = msg; t.hidden = false;
-    clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 3200);
+    clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 3600);
   }
-  const all = () => [...added, ...base];
+
+  // ---- 資料庫 ----
+  function connect(){
+    const config = window.REPAIR_CONFIG;
+    if (!window.supabase?.createClient || !config?.supabaseUrl || !config?.supabasePublishableKey?.startsWith('sb_publishable_'))
+      throw new Error('連線設定或程式載入失敗');
+    return window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      global: { fetch: (url, options = {}) => fetch(url, { ...options, signal: AbortSignal.timeout(20000) }) },
+    });
+  }
+  const fromRow = r => ({
+    id: 'db-' + r.id, db: true, created: r.created_at, no: '',
+    name: r.name, sticker: r.sticker, paste: r.paste, roll: r.roll, qty: r.qty, mold: r.mold,
+    moldL: r.mold_l, moldM: r.mold_m, moldS: r.mold_s, note: r.note, posRaw: '', place: [],
+    styles: (Array.isArray(r.images) ? r.images : []).filter(safeImg).map(img => ({ img, label: r.sticker })),
+  });
+  function toRow(c){
+    const row = {};
+    for (const k of FIELDS) row[COL[k] || k] = String(c[k] ?? '').trim();
+    row.images = (c.styles || []).map(s => s.img).filter(safeImg).slice(0, MAX_IMGS);
+    return row;
+  }
+  async function loadShared(){
+    if (!client){ dbError = dbError || '無法建立資料庫連線'; return; }
+    try {
+      const { data, error } = await client.from(TABLE)
+        .select('id,created_at,name,sticker,paste,roll,qty,mold,mold_l,mold_m,mold_s,note,images')
+        .order('created_at', { ascending: false }).limit(2000);
+      if (error) throw error;
+      shared = (data || []).map(fromRow); dbError = '';
+    } catch (e) {
+      dbError = e.message || '連線異常';
+    }
+  }
+
+  function loadLegacy(){
+    try { const v = JSON.parse(localStorage.getItem(LEGACY_KEY) || '[]'); return Array.isArray(v) ? v.filter(c => c && c.name).map(c => ({ ...c, local: true, db: false, place: [], styles: (c.styles || []).filter(s => safeImg(s?.img)) })) : []; }
+    catch { return []; }
+  }
+  function saveLegacy(){
+    try { legacy.length ? localStorage.setItem(LEGACY_KEY, JSON.stringify(legacy)) : localStorage.removeItem(LEGACY_KEY); } catch {}
+  }
+
+  function renderBanner(){
+    const b = $('#banner'), parts = [];
+    if (dbError) parts.push(`<div><span>無法連線共用資料庫，目前只顯示 Excel 資料，暫時不能新增客戶。（${esc(dbError)}）</span><button class="btn sm" type="button" data-retry>再試一次</button></div>`);
+    if (legacy.length) parts.push(`<div><span>這台裝置有 <b>${legacy.length}</b> 筆先前只存在瀏覽器的新增客戶，尚未放進共用資料庫。</span>${client && !dbError ? '<button class="btn sm primary" type="button" data-upload-all>全部上傳</button>' : ''}</div>`);
+    b.innerHTML = parts.join(''); b.hidden = !parts.length;
+  }
 
   function matchPos(val, f){
     if (!f) return true;
@@ -247,25 +301,25 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
   }
 
   function render(){
+    renderBanner();
     const q = norm($('#q').value), fp = $('#fPaste').value, fr = $('#fRoll').value;
     const rows = all().filter(c => {
       if (q && ![c.name, c.sticker, c.mold, c.moldL].some(v => norm(v).includes(q))) return false;
       return matchPos(c.paste || '', fp) && matchPos(c.roll || '', fr);
     });
-    // 完全符合客戶名稱者排最前面
     if (q) rows.sort((a, b) => (norm(b.name) === q) - (norm(a.name) === q));
-    $('#count').innerHTML = `共 <b>${rows.length}</b> 筆${q || fp || fr ? `（全部 ${all().length} 筆）` : ''}${added.length ? `・本機新增 ${added.length} 筆` : ''}`;
+    $('#count').innerHTML = `共 <b>${rows.length}</b> 筆${q || fp || fr ? `（全部 ${all().length} 筆）` : ''}${shared.length ? `・共用新增 ${shared.length} 筆` : ''}`;
     const list = $('#list');
     if (!rows.length){
-      list.innerHTML = `<div class="empty-list">找不到「${esc($('#q').value)}」的資料。<br><br><button class="btn primary" type="button" data-add-name="${esc($('#q').value.trim())}">＋ 新增這個客戶</button></div>`;
+      list.innerHTML = `<div class="empty-list">找不到「${esc($('#q').value)}」的資料。${dbError ? '' : `<br><br><button class="btn primary" type="button" data-add-name="${esc($('#q').value.trim())}">＋ 新增這個客戶</button>`}</div>`;
       return;
     }
     list.innerHTML = rows.slice(0, 200).map(card).join('');
   }
 
   const val = v => v ? esc(v) : '<span class="empty">—</span>';
+  const day = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('zh-TW'); };
   function card(c){
-    const local = !!c.local;
     const styles = (c.styles || []).length
       ? c.styles.map(s => `<figure><a href="${esc(s.img)}" target="_blank" rel="noopener"><img src="${esc(s.img)}" alt="${esc(c.name)} 貼紙樣式" loading="lazy"></a>${s.label && s.label !== c.name ? `<figcaption>${esc(s.label)}</figcaption>` : ''}</figure>`).join('')
       : '<div class="noimg">尚無貼紙樣式圖片</div>';
@@ -273,13 +327,14 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
       .map(m => `<span>${m[0]} <b>${esc(m[1])}</b></span>`).join('');
     const place = (c.place || []).length
       ? `<div class="place"><div>貼法參考照片</div>${c.place.map(p => `<figure><a href="${esc(p.img)}" target="_blank" rel="noopener"><img src="${esc(p.img)}" alt="${esc(p.label)}" loading="lazy"></a><figcaption>${esc(p.label)}</figcaption></figure>`).join('')}</div>` : '';
-    return `<article class="card${local ? ' local' : ''}">
+    return `<article class="card${c.local ? ' local' : ''}">
       <div class="head">
         ${c.no != null && c.no !== '' ? `<span class="no">#${esc(c.no)}</span>` : ''}
         <h2>${esc(c.name)}</h2>
         ${c.sticker && c.sticker !== c.name ? `<span class="chip">貼紙：${esc(c.sticker)}</span>` : ''}
-        ${local ? '<span class="chip local">本機新增</span>' : ''}
-        ${local ? `<span class="acts"><button class="btn sm" type="button" data-edit="${esc(c.id)}">編輯</button><button class="btn sm danger" type="button" data-del="${esc(c.id)}">刪除</button></span>` : ''}
+        ${c.db ? `<span class="chip shared">共用新增 ${esc(day(c.created))}</span>` : ''}
+        ${c.local ? '<span class="chip local">僅本機・未上傳</span>' : ''}
+        ${c.local ? `<span class="acts">${client && !dbError ? `<button class="btn sm" type="button" data-upload="${esc(c.id)}">上傳</button>` : ''}<button class="btn sm danger" type="button" data-del="${esc(c.id)}">刪除</button></span>` : ''}
       </div>
       <div class="body">
         <div class="styles">${styles}</div>
@@ -297,27 +352,25 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
     </article>`;
   }
 
-  // ---- 新增／編輯 ----
+  // ---- 新增 ----
   const dlg = $('#dlg'), form = $('#form');
-  function openForm(c, presetName){
-    editing = c ? c.id : null;
-    form.reset();
-    $('#dlgTitle').textContent = c ? `編輯：${c.name}` : '新增客戶';
-    $('#nameMsg').textContent = ''; $('#nameMsg').className = '';
-    for (const k of ['name','sticker','qty','paste','roll','mold','moldL','moldM','moldS','note']) form.elements[k].value = c ? (c[k] || '') : '';
-    if (!c && presetName) form.elements.name.value = presetName;
-    pendingImgs = c ? (c.styles || []).map(s => s.img) : [];
-    drawThumbs(); checkName();
+  function formMsg(text, err){ const m = $('#formMsg'); m.textContent = text; m.className = 'fmsg' + (err ? ' err' : ''); }
+  function openForm(presetName){
+    if (dbError || !client) return toast('目前無法連線共用資料庫，暫時不能新增客戶');
+    form.reset(); formMsg('儲存後所有人都看得到。');
+    if (presetName) form.elements.name.value = presetName;
+    pendingImgs = []; drawThumbs(); checkName();
     dlg.showModal(); form.elements.name.focus();
   }
   function drawThumbs(){
     $('#thumbs').innerHTML = pendingImgs.map((src, i) => `<div><img src="${src}" alt="預覽 ${i + 1}"><button type="button" data-rm="${i}" aria-label="移除圖片 ${i + 1}">×</button></div>`).join('');
+    $('#iImg').disabled = pendingImgs.length >= MAX_IMGS;
   }
   function checkName(){
     const n = norm(form.elements.name.value), msg = $('#nameMsg');
-    const dup = n && all().filter(c => c.id !== editing && norm(c.name) === n);
-    if (dup && dup.length){ msg.textContent = `提醒：已有 ${dup.length} 筆同名客戶資料，仍可儲存為另一款。`; msg.className = ''; }
-    else { msg.textContent = ''; }
+    const dup = n ? all().filter(c => norm(c.name) === n) : [];
+    msg.className = '';
+    msg.textContent = dup.length ? `提醒：已有 ${dup.length} 筆同名客戶資料，仍可儲存為另一款。` : '';
   }
   function shrink(file){
     return new Promise((ok, fail) => {
@@ -335,93 +388,102 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
     });
   }
   $('#iImg').addEventListener('change', async e => {
-    for (const f of e.target.files){
+    const files = [...e.target.files]; e.target.value = '';
+    if (pendingImgs.length + files.length > MAX_IMGS) toast(`最多 ${MAX_IMGS} 張圖片，多的已略過`);
+    for (const f of files.slice(0, MAX_IMGS - pendingImgs.length)){
       try { pendingImgs.push(await shrink(f)); } catch { toast(`無法讀取圖片：${f.name}`); }
     }
-    e.target.value = ''; drawThumbs();
+    drawThumbs();
   });
   $('#thumbs').addEventListener('click', e => {
     const i = e.target.dataset.rm; if (i == null) return;
     pendingImgs.splice(+i, 1); drawThumbs();
   });
   form.elements.name.addEventListener('input', checkName);
-  dlg.addEventListener('click', e => { if (e.target.closest('[data-close]')) dlg.close(); });
-  form.addEventListener('submit', e => {
+  dlg.addEventListener('click', e => { if (e.target.closest('[data-close]') && !submitting) dlg.close(); });
+  dlg.addEventListener('cancel', e => { if (submitting) e.preventDefault(); });
+
+  async function insert(c){
+    const { error } = await client.from(TABLE).insert(toRow(c));
+    if (error) throw error;
+  }
+  form.addEventListener('submit', async e => {
     e.preventDefault();
+    if (submitting) return;
     const name = form.elements.name.value.trim();
     if (!name){ $('#nameMsg').textContent = '請輸入客戶名稱'; $('#nameMsg').className = 'err'; form.elements.name.focus(); return; }
-    const rec = { local: true, id: editing || 'n' + Date.now().toString(36), no: '' };
-    for (const k of ['name','sticker','qty','paste','roll','mold','moldL','moldM','moldS','note']) rec[k] = form.elements[k].value.trim();
-    rec.styles = pendingImgs.map(img => ({ img, label: rec.sticker }));
-    rec.place = []; rec.posRaw = '';
-    const prev = added.slice();
-    const i = added.findIndex(c => c.id === rec.id);
-    if (i >= 0){ rec.created = added[i].created; rec.updated = new Date().toISOString(); added[i] = rec; }
-    else { rec.created = new Date().toISOString(); added.unshift(rec); }
-    if (!saveAdded()){ added = prev; return; }
-    dlg.close();
-    $('#q').value = name; render();
-    toast(i >= 0 ? `已更新「${name}」` : `已新增「${name}」`);
+    if (!navigator.onLine) return formMsg('目前離線，尚未儲存。請連線後再按儲存。', true);
+    const rec = {}; for (const k of FIELDS) rec[k] = form.elements[k].value.trim();
+    rec.styles = pendingImgs.map(img => ({ img }));
+    submitting = true; $('#saveBtn').disabled = true; $('#saveBtn').textContent = '儲存中…'; formMsg('正在儲存到共用資料庫…');
+    try {
+      await insert(rec);
+      dlg.close();
+      await loadShared();
+      $('#q').value = name; render();
+      toast(`已新增「${name}」，所有人都看得到`);
+    } catch (err) {
+      formMsg(`儲存未確認成功，已保留填寫內容。請先關閉視窗按「重新整理」確認是否已新增，避免重複。（${err.message || '連線異常'}）`, true);
+    } finally {
+      submitting = false; $('#saveBtn').disabled = false; $('#saveBtn').textContent = '儲存';
+    }
   });
 
-  $('#addBtn').addEventListener('click', () => openForm(null, $('#q').value.trim()));
-  $('#list').addEventListener('click', e => {
-    const b = e.target.closest('button'); if (!b) return;
-    if (b.dataset.addName != null) return openForm(null, b.dataset.addName);
-    if (b.dataset.edit) return openForm(added.find(c => c.id === b.dataset.edit));
+  async function uploadLegacy(items){
+    let ok = 0;
+    for (const c of items){
+      try { await insert(c); legacy = legacy.filter(x => x !== c); ok++; }
+      catch (err) { toast(`「${c.name}」上傳失敗：${err.message || '連線異常'}`); break; }
+    }
+    saveLegacy(); await loadShared(); render();
+    if (ok) toast(`已上傳 ${ok} 筆到共用資料庫`);
+  }
+
+  $('#addBtn').addEventListener('click', () => openForm($('#q').value.trim()));
+  document.addEventListener('click', async e => {
+    const b = e.target.closest('#list button, #banner button'); if (!b) return;
+    if (b.dataset.addName != null) return openForm(b.dataset.addName);
+    if (b.hasAttribute('data-retry')){ b.disabled = true; return refresh(); }
+    if (b.hasAttribute('data-upload-all')){ b.disabled = true; return uploadLegacy(legacy.slice()); }
+    if (b.dataset.upload){ b.disabled = true; return uploadLegacy(legacy.filter(c => c.id === b.dataset.upload)); }
     if (b.dataset.del){
-      const c = added.find(x => x.id === b.dataset.del);
-      if (!c || !confirm(`確定刪除本機新增的「${c.name}」？`)) return;
-      added = added.filter(x => x !== c); saveAdded(); render(); toast(`已刪除「${c.name}」`);
+      const c = legacy.find(x => x.id === b.dataset.del);
+      if (!c || !confirm(`確定刪除這台裝置上的「${c.name}」？（尚未上傳的資料刪除後無法復原）`)) return;
+      legacy = legacy.filter(x => x !== c); saveLegacy(); render(); toast(`已刪除「${c.name}」`);
     }
   });
   for (const id of ['#q', '#fPaste', '#fRoll']) $(id).addEventListener('input', render);
 
-  // ---- 匯出／匯入 ----
-  function download(name, text, type){
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name;
-    document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  }
-  const today = () => new Date().toLocaleDateString('sv-SE');
+  // ---- 匯出 ----
   $('#exportCsv').addEventListener('click', () => {
-    const head = ['編號','客戶名稱','貼紙公司名','張貼位置','滾字位置','數量','字模','廠商字模(大)','年字模(中)','月字模(小)','備註','原始位置記錄','來源'];
+    const head = ['編號','客戶名稱','貼紙公司名','張貼位置','滾字位置','數量','字模','廠商字模(大)','年字模(中)','月字模(小)','備註','原始位置記錄','來源','新增時間'];
     const cell = v => /[",\n]/.test(v = String(v ?? '')) ? `"${v.replace(/"/g, '""')}"` : v;
-    const lines = all().map(c => [c.no, c.name, c.sticker, c.paste, c.roll, c.qty, c.mold, c.moldL, c.moldM, c.moldS, c.note, c.posRaw, c.local ? '本機新增' : 'Excel'].map(cell).join(','));
-    download(`客戶貼紙-${today()}.csv`, '﻿' + [head.join(','), ...lines].join('\r\n'), 'text/csv;charset=utf-8');
-  });
-  $('#exportJson').addEventListener('click', () => {
-    if (!added.length) return toast('目前沒有本機新增的客戶');
-    download(`客戶貼紙-新增備份-${today()}.json`, JSON.stringify({ app: 'sticker-lookup', version: 1, customers: added }), 'application/json');
-  });
-  $('#importJson').addEventListener('click', () => $('#importFile').click());
-  $('#importFile').addEventListener('change', async e => {
-    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-    try {
-      const data = JSON.parse(await f.text());
-      const list = (Array.isArray(data) ? data : data.customers || []).filter(c => c && typeof c.name === 'string' && c.name.trim());
-      if (!list.length) return toast('備份檔中沒有可匯入的客戶');
-      const ids = new Set(added.map(c => c.id)); let n = 0;
-      const prev = added.slice();
-      for (const c of list){
-        const rec = { ...c, local: true, id: typeof c.id === 'string' ? c.id : 'n' + Date.now().toString(36) + n,
-          styles: (Array.isArray(c.styles) ? c.styles : []).filter(s => s && typeof s.img === 'string' && s.img.startsWith('data:image/')),
-          place: [] };
-        if (ids.has(rec.id)) continue;
-        added.push(rec); ids.add(rec.id); n++;
-      }
-      if (!saveAdded()){ added = prev; return; }
-      render(); toast(n ? `已匯入 ${n} 筆客戶` : '備份中的客戶都已存在，未重複匯入');
-    } catch { toast('無法讀取備份檔，請確認是本頁匯出的 JSON'); }
+    const lines = all().map(c => [c.no, c.name, c.sticker, c.paste, c.roll, c.qty, c.mold, c.moldL, c.moldM, c.moldS, c.note, c.posRaw,
+      c.db ? '共用新增' : c.local ? '本機未上傳' : 'Excel', c.created ? new Date(c.created).toLocaleString('zh-TW') : ''].map(cell).join(','));
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['﻿' + [head.join(','), ...lines].join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+    a.download = `客戶貼紙-${new Date().toLocaleDateString('sv-SE')}.csv`;
+    document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   });
 
+  async function refresh(){
+    $('#reload').disabled = true;
+    if (!client){ try { client = connect(); dbError = ''; } catch (e) { dbError = e.message; } }
+    await loadShared(); render();
+    $('#reload').disabled = false;
+  }
+  $('#reload').addEventListener('click', refresh);
+
   // ---- 啟動 ----
-  added = loadAdded();
+  legacy = loadLegacy();
   const qs = new URLSearchParams(location.search).get('q');
   if (qs) $('#q').value = qs;
-  fetch('data.json').then(r => { if (!r.ok) throw 0; return r.json(); })
-    .then(d => { base = d.customers; render(); })
-    .catch(() => { render(); toast('無法載入 Excel 資料，目前只顯示本機新增的客戶'); });
+  try { client = connect(); } catch (e) { dbError = e.message; }
+  Promise.all([
+    fetch('data.json').then(r => { if (!r.ok) throw 0; return r.json(); }).then(d => { base = d.customers; })
+      .catch(() => toast('無法載入 Excel 資料')),
+    loadShared(),
+  ]).then(render);
 })();
 </script>
 </body>
