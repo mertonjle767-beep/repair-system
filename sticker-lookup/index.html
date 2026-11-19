@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>客戶貼紙查詢</title>
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-title" content="貼紙查詢">
+<meta name="description" content="依客戶名稱查詢貼紙樣式、張貼位置、數量、字模與滾字位置，並可新增客戶。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  --bg:#eef1f4; --surface:#ffffff; --surface-2:#f5f7f9; --line:#d6dce3;
+  --fg:#1b2430; --muted:#5d6b7b; --accent:#13814a; --accent-soft:#e3f4ea; --accent-fg:#ffffff;
+  --steel:#2f4a66; --steel-fg:#ffffff; --warn:#b3261e; --local:#8a5a00; --local-soft:#fff3d6;
+  --font-body:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;
+  --font-num:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12171d; --surface:#1a2129; --surface-2:#202933; --line:#2e3946;
+  --fg:#e6ebf0; --muted:#94a2b3; --accent:#3fbf7f; --accent-soft:#16301f; --accent-fg:#06140c;
+  --steel:#24384e; --steel-fg:#eef3f8; --warn:#ff8a80; --local:#f0c060; --local-soft:#3a2d10; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171d; --surface:#1a2129; --surface-2:#202933; --line:#2e3946;
+  --fg:#e6ebf0; --muted:#94a2b3; --accent:#3fbf7f; --accent-soft:#16301f; --accent-fg:#06140c;
+  --steel:#24384e; --steel-fg:#eef3f8; --warn:#ff8a80; --local:#f0c060; --local-soft:#3a2d10; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--steel)}
+.wrap{max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button,input,select,textarea{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--steel);color:var(--steel-fg);box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.top .wrap{padding-block:12px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.brand{flex:1 1 220px;min-width:0}
+.brand h1{margin:0;font-size:20px;font-weight:900;letter-spacing:.04em}
+.brand span{font-size:12px;opacity:.75}
+.q{flex:3 1 320px;display:flex;gap:8px;min-width:0}
+.q input{flex:1;min-width:0;padding:10px 12px;border-radius:8px;border:0;background:#fff;color:#1b2430;font-size:16px}
+.btn{padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:700}
+.btn.danger{color:var(--warn)}
+.btn.sm{padding:5px 10px;font-size:13px}
+
+.bar{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.bar label{display:flex;gap:6px;align-items:center;font-size:14px;color:var(--muted)}
+.bar select{padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface)}
+.count{margin-left:auto;font-size:13px;color:var(--muted)}
+.count b{font-family:var(--font-num);color:var(--fg)}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+
+.list{margin:14px 0 40px;display:grid;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.card.local{border-color:var(--local)}
+.head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.head h2{margin:0;font-size:19px;font-weight:900}
+.no{font-family:var(--font-num);font-size:12px;color:var(--muted)}
+.chip{font-size:12px;padding:1px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:700}
+.chip.local{background:var(--local-soft);color:var(--local)}
+.head .acts{margin-left:auto;display:flex;gap:6px}
+.body{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:0}
+.styles{padding:12px 14px;display:flex;flex-direction:column;gap:10px;border-right:1px solid var(--line)}
+.styles figure{margin:0}
+.styles a{display:block}
+.styles img{display:block;max-width:100%;max-height:200px;border-radius:6px;border:1px solid var(--line);background:#fff}
+.styles figcaption{font-size:12px;color:var(--muted);margin-top:3px}
+.noimg{font-size:13px;color:var(--muted);padding:18px;text-align:center;border:1px dashed var(--line);border-radius:6px}
+.facts{margin:0;padding:12px 14px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 14px;align-content:start}
+.facts dt{font-size:13px;color:var(--muted);white-space:nowrap}
+.facts dd{margin:0;font-weight:500;overflow-wrap:anywhere}
+.facts dd.key{font-size:17px;font-weight:700}
+.facts dd .empty{color:var(--muted);font-weight:400}
+.molds{display:flex;flex-wrap:wrap;gap:6px}
+.molds span{font-size:13px;border:1px solid var(--line);border-radius:6px;padding:1px 7px;background:var(--surface-2)}
+.molds b{font-family:var(--font-num)}
+.place{padding:0 14px 12px;display:flex;flex-wrap:wrap;gap:10px}
+.place>div{width:100%;font-size:13px;color:var(--muted)}
+.place figure{margin:0;width:150px}
+.place img{width:150px;height:150px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
+.place figcaption{font-size:12px;color:var(--muted)}
+.empty-list{background:var(--surface);border:1px dashed var(--line);border-radius:10px;padding:28px;text-align:center;color:var(--muted)}
+.note-foot{font-size:12px;color:var(--muted);margin:-24px 0 32px}
+
+dialog{border:1px solid var(--line);border-radius:12px;padding:0;background:var(--surface);color:var(--fg);width:min(640px,calc(100vw - 32px));max-height:calc(100dvh - 32px)}
+dialog::backdrop{background:rgba(10,15,20,.55)}
+dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
+.dh{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.dh h3{margin:0;font-size:18px;flex:1}
+.db{padding:14px 16px;overflow:auto;display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+.df{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.f{display:flex;flex-direction:column;gap:4px;min-width:0}
+.f.full{grid-column:1/-1}
+.f label{font-size:13px;color:var(--muted)}
+.f label i{color:var(--warn);font-style:normal}
+.f input,.f select,.f textarea{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);min-width:0;width:100%;font-size:16px}
+.f textarea{min-height:64px;resize:vertical}
+.f small{font-size:12px;color:var(--muted)}
+.f small.err{color:var(--warn)}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap}
+.thumbs div{position:relative}
+.thumbs img{height:70px;border-radius:6px;border:1px solid var(--line);display:block}
+.thumbs button{position:absolute;top:-8px;right:-8px;width:24px;height:24px;border-radius:50%;border:0;background:var(--warn);color:#fff;cursor:pointer;line-height:1}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;z-index:50;max-width:calc(100vw - 32px)}
+
+@media (max-width:640px){
+  .body{grid-template-columns:1fr}
+  .facts{order:-1;border-bottom:1px solid var(--line)}
+  .styles{border-right:0}
+  .styles img{max-height:140px}
+  .bar label{flex:1 1 140px}
+  .bar select{flex:1;min-width:0}
+  .tools .btn{padding:5px 8px;font-size:12px}
+  .db{grid-template-columns:1fr}
+  .count{margin-left:0;width:100%}
+  .place figure,.place img{width:120px}
+  .place img{height:120px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><h1>客戶貼紙查詢</h1><span>貼紙樣式・張貼位置・數量・字模・滾字位置</span></div>
+    <div class="q">
+      <input id="q" type="search" placeholder="輸入客戶名稱，例如：永清" autocomplete="off" aria-label="客戶名稱">
+      <button class="btn primary" id="addBtn" type="button">＋ 新增客戶</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="bar">
+    <label>張貼位置
+      <select id="fPaste"><option value="">全部</option><option value="頭邊">頭邊</option><option value="中間">中間</option><option value="旁邊">旁邊</option><option value="none">不貼／無</option></select>
+    </label>
+    <label>滾字位置
+      <select id="fRoll"><option value="">全部</option><option value="中間">中間</option><option value="頭邊">頭邊</option><option value="none">未記錄／不滾字</option></select>
+    </label>
+    <div class="tools">
+      <button class="btn sm" id="exportCsv" type="button">匯出 CSV（Excel）</button>
+      <button class="btn sm" id="exportJson" type="button">備份新增客戶</button>
+      <button class="btn sm" id="importJson" type="button">匯入備份</button>
+      <input id="importFile" type="file" accept="application/json,.json" hidden>
+    </div>
+    <div class="count" id="count" aria-live="polite"></div>
+  </div>
+  <div class="list" id="list"><div class="empty-list">資料載入中…</div></div>
+  <p class="note-foot">資料來源：《20160714字模統計》貼紙工作表。新增的客戶只存在目前這台裝置的瀏覽器，請定期用「備份新增客戶」匯出，換裝置時再匯入。</p>
+</main>
+
+<dialog id="dlg" aria-labelledby="dlgTitle">
+  <form id="form" method="dialog" novalidate>
+    <div class="dh"><h3 id="dlgTitle">新增客戶</h3><button class="btn sm" type="button" data-close>關閉</button></div>
+    <div class="db">
+      <div class="f full">
+        <label for="iName">客戶名稱 <i>*</i></label>
+        <input id="iName" name="name" required maxlength="40">
+        <small id="nameMsg"></small>
+      </div>
+      <div class="f">
+        <label for="iSticker">貼紙公司名</label>
+        <input id="iSticker" name="sticker" maxlength="60" placeholder="貼紙上印的公司名">
+      </div>
+      <div class="f">
+        <label for="iQty">數量</label>
+        <input id="iQty" name="qty" maxlength="20" inputmode="numeric" placeholder="例如：1">
+      </div>
+      <div class="f">
+        <label for="iPaste">張貼位置</label>
+        <input id="iPaste" name="paste" list="pasteOpts" maxlength="80" placeholder="頭邊／中間／字旁邊…">
+        <datalist id="pasteOpts"><option value="頭邊"><option value="中間"><option value="字旁邊"><option value="無"><option value="寄給客戶貼"></datalist>
+      </div>
+      <div class="f">
+        <label for="iRoll">滾字位置</label>
+        <input id="iRoll" name="roll" list="rollOpts" maxlength="80" placeholder="中間／頭邊／不滾字">
+        <datalist id="rollOpts"><option value="中間"><option value="頭邊"><option value="不滾字"></datalist>
+      </div>
+      <div class="f">
+        <label for="iMold">字模</label>
+        <input id="iMold" name="mold" maxlength="40">
+      </div>
+      <div class="f">
+        <label for="iMoldL">廠商字模（大 64.5×30mm）</label>
+        <input id="iMoldL" name="moldL" maxlength="40">
+      </div>
+      <div class="f">
+        <label for="iMoldM">年字模（中 46.5×30mm）</label>
+        <select id="iMoldM" name="moldM"><option value="">未填</option><option>V</option><option>X</option></select>
+      </div>
+      <div class="f">
+        <label for="iMoldS">月字模（小 35×30mm）</label>
+        <select id="iMoldS" name="moldS"><option value="">未填</option><option>V</option><option>X</option></select>
+      </div>
+      <div class="f full">
+        <label for="iImg">貼紙樣式圖片</label>
+        <input id="iImg" type="file" accept="image/*" multiple>
+        <small>可上傳多張，系統會自動縮小後存在此瀏覽器。</small>
+        <div class="thumbs" id="thumbs"></div>
+      </div>
+      <div class="f full">
+        <label for="iNote">備註</label>
+        <textarea id="iNote" name="note" maxlength="300"></textarea>
+      </div>
+    </div>
+    <div class="df">
+      <button class="btn" type="button" data-close>取消</button>
+      <button class="btn primary" type="submit" id="saveBtn">儲存</button>
+    </div>
+  </form>
+</dialog>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(() => {
+  const KEY = 'sticker-lookup.added.v1';
+  const $ = s => document.querySelector(s);
+  let base = [], added = [], editing = null, pendingImgs = [];
+
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const norm = v => String(v ?? '').toLowerCase().replace(/[\s()（）.．、\/\-]/g, '');
+
+  function loadAdded(){
+    try { const v = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(v) ? v : []; }
+    catch { return []; }
+  }
+  function saveAdded(){
+    try { localStorage.setItem(KEY, JSON.stringify(added)); return true; }
+    catch (e) { toast('儲存失敗：瀏覽器空間不足或已停用儲存，請減少圖片或先匯出備份。'); return false; }
+  }
+  function toast(msg){
+    const t = $('#toast'); t.textContent = msg; t.hidden = false;
+    clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 3200);
+  }
+  const all = () => [...added, ...base];
+
+  function matchPos(val, f){
+    if (!f) return true;
+    if (f === 'none') return !val || /^(無|不)/.test(val);
+    return val.includes(f);
+  }
+
+  function render(){
+    const q = norm($('#q').value), fp = $('#fPaste').value, fr = $('#fRoll').value;
+    const rows = all().filter(c => {
+      if (q && ![c.name, c.sticker, c.mold, c.moldL].some(v => norm(v).includes(q))) return false;
+      return matchPos(c.paste || '', fp) && matchPos(c.roll || '', fr);
+    });
+    // 完全符合客戶名稱者排最前面
+    if (q) rows.sort((a, b) => (norm(b.name) === q) - (norm(a.name) === q));
+    $('#count').innerHTML = `共 <b>${rows.length}</b> 筆${q || fp || fr ? `（全部 ${all().length} 筆）` : ''}${added.length ? `・本機新增 ${added.length} 筆` : ''}`;
+    const list = $('#list');
+    if (!rows.length){
+      list.innerHTML = `<div class="empty-list">找不到「${esc($('#q').value)}」的資料。<br><br><button class="btn primary" type="button" data-add-name="${esc($('#q').value.trim())}">＋ 新增這個客戶</button></div>`;
+      return;
+    }
+    list.innerHTML = rows.slice(0, 200).map(card).join('');
+  }
+
+  const val = v => v ? esc(v) : '<span class="empty">—</span>';
+  function card(c){
+    const local = !!c.local;
+    const styles = (c.styles || []).length
+      ? c.styles.map(s => `<figure><a href="${esc(s.img)}" target="_blank" rel="noopener"><img src="${esc(s.img)}" alt="${esc(c.name)} 貼紙樣式" loading="lazy"></a>${s.label && s.label !== c.name ? `<figcaption>${esc(s.label)}</figcaption>` : ''}</figure>`).join('')
+      : '<div class="noimg">尚無貼紙樣式圖片</div>';
+    const molds = [['廠商(大)', c.moldL], ['年(中)', c.moldM], ['月(小)', c.moldS]].filter(m => m[1])
+      .map(m => `<span>${m[0]} <b>${esc(m[1])}</b></span>`).join('');
+    const place = (c.place || []).length
+      ? `<div class="place"><div>貼法參考照片</div>${c.place.map(p => `<figure><a href="${esc(p.img)}" target="_blank" rel="noopener"><img src="${esc(p.img)}" alt="${esc(p.label)}" loading="lazy"></a><figcaption>${esc(p.label)}</figcaption></figure>`).join('')}</div>` : '';
+    return `<article class="card${local ? ' local' : ''}">
+      <div class="head">
+        ${c.no != null && c.no !== '' ? `<span class="no">#${esc(c.no)}</span>` : ''}
+        <h2>${esc(c.name)}</h2>
+        ${c.sticker && c.sticker !== c.name ? `<span class="chip">貼紙：${esc(c.sticker)}</span>` : ''}
+        ${local ? '<span class="chip local">本機新增</span>' : ''}
+        ${local ? `<span class="acts"><button class="btn sm" type="button" data-edit="${esc(c.id)}">編輯</button><button class="btn sm danger" type="button" data-del="${esc(c.id)}">刪除</button></span>` : ''}
+      </div>
+      <div class="body">
+        <div class="styles">${styles}</div>
+        <dl class="facts">
+          <dt>張貼位置</dt><dd class="key">${val(c.paste)}</dd>
+          <dt>滾字位置</dt><dd class="key">${val(c.roll)}</dd>
+          <dt>數量</dt><dd>${val(c.qty)}</dd>
+          <dt>字模</dt><dd>${val(c.mold)}</dd>
+          <dt>字模尺寸</dt><dd>${molds ? `<div class="molds">${molds}</div>` : '<span class="empty">—</span>'}</dd>
+          ${c.note ? `<dt>備註</dt><dd>${esc(c.note)}</dd>` : ''}
+          ${c.posRaw && c.posRaw !== [c.roll && '滾' + c.roll, c.paste && '貼' + c.paste].filter(Boolean).join('-') ? `<dt>原始記錄</dt><dd>${esc(c.posRaw)}</dd>` : ''}
+        </dl>
+      </div>
+      ${place}
+    </article>`;
+  }
+
+  // ---- 新增／編輯 ----
+  const dlg = $('#dlg'), form = $('#form');
+  function openForm(c, presetName){
+    editing = c ? c.id : null;
+    form.reset();
+    $('#dlgTitle').textContent = c ? `編輯：${c.name}` : '新增客戶';
+    $('#nameMsg').textContent = ''; $('#nameMsg').className = '';
+    for (const k of ['name','sticker','qty','paste','roll','mold','moldL','moldM','moldS','note']) form.elements[k].value = c ? (c[k] || '') : '';
+    if (!c && presetName) form.elements.name.value = presetName;
+    pendingImgs = c ? (c.styles || []).map(s => s.img) : [];
+    drawThumbs(); checkName();
+    dlg.showModal(); form.elements.name.focus();
+  }
+  function drawThumbs(){
+    $('#thumbs').innerHTML = pendingImgs.map((src, i) => `<div><img src="${src}" alt="預覽 ${i + 1}"><button type="button" data-rm="${i}" aria-label="移除圖片 ${i + 1}">×</button></div>`).join('');
+  }
+  function checkName(){
+    const n = norm(form.elements.name.value), msg = $('#nameMsg');
+    const dup = n && all().filter(c => c.id !== editing && norm(c.name) === n);
+    if (dup && dup.length){ msg.textContent = `提醒：已有 ${dup.length} 筆同名客戶資料，仍可儲存為另一款。`; msg.className = ''; }
+    else { msg.textContent = ''; }
+  }
+  function shrink(file){
+    return new Promise((ok, fail) => {
+      const url = URL.createObjectURL(file), img = new Image();
+      img.onload = () => {
+        const s = Math.min(1, 640 / Math.max(img.width, img.height));
+        const cv = document.createElement('canvas');
+        cv.width = Math.round(img.width * s); cv.height = Math.round(img.height * s);
+        const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height);
+        g.drawImage(img, 0, 0, cv.width, cv.height); URL.revokeObjectURL(url);
+        ok(cv.toDataURL('image/jpeg', .8));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); fail(); };
+      img.src = url;
+    });
+  }
+  $('#iImg').addEventListener('change', async e => {
+    for (const f of e.target.files){
+      try { pendingImgs.push(await shrink(f)); } catch { toast(`無法讀取圖片：${f.name}`); }
+    }
+    e.target.value = ''; drawThumbs();
+  });
+  $('#thumbs').addEventListener('click', e => {
+    const i = e.target.dataset.rm; if (i == null) return;
+    pendingImgs.splice(+i, 1); drawThumbs();
+  });
+  form.elements.name.addEventListener('input', checkName);
+  dlg.addEventListener('click', e => { if (e.target.closest('[data-close]')) dlg.close(); });
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const name = form.elements.name.value.trim();
+    if (!name){ $('#nameMsg').textContent = '請輸入客戶名稱'; $('#nameMsg').className = 'err'; form.elements.name.focus(); return; }
+    const rec = { local: true, id: editing || 'n' + Date.now().toString(36), no: '' };
+    for (const k of ['name','sticker','qty','paste','roll','mold','moldL','moldM','moldS','note']) rec[k] = form.elements[k].value.trim();
+    rec.styles = pendingImgs.map(img => ({ img, label: rec.sticker }));
+    rec.place = []; rec.posRaw = '';
+    const prev = added.slice();
+    const i = added.findIndex(c => c.id === rec.id);
+    if (i >= 0){ rec.created = added[i].created; rec.updated = new Date().toISOString(); added[i] = rec; }
+    else { rec.created = new Date().toISOString(); added.unshift(rec); }
+    if (!saveAdded()){ added = prev; return; }
+    dlg.close();
+    $('#q').value = name; render();
+    toast(i >= 0 ? `已更新「${name}」` : `已新增「${name}」`);
+  });
+
+  $('#addBtn').addEventListener('click', () => openForm(null, $('#q').value.trim()));
+  $('#list').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.addName != null) return openForm(null, b.dataset.addName);
+    if (b.dataset.edit) return openForm(added.find(c => c.id === b.dataset.edit));
+    if (b.dataset.del){
+      const c = added.find(x => x.id === b.dataset.del);
+      if (!c || !confirm(`確定刪除本機新增的「${c.name}」？`)) return;
+      added = added.filter(x => x !== c); saveAdded(); render(); toast(`已刪除「${c.name}」`);
+    }
+  });
+  for (const id of ['#q', '#fPaste', '#fRoll']) $(id).addEventListener('input', render);
+
+  // ---- 匯出／匯入 ----
+  function download(name, text, type){
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name;
+    document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+  const today = () => new Date().toLocaleDateString('sv-SE');
+  $('#exportCsv').addEventListener('click', () => {
+    const head = ['編號','客戶名稱','貼紙公司名','張貼位置','滾字位置','數量','字模','廠商字模(大)','年字模(中)','月字模(小)','備註','原始位置記錄','來源'];
+    const cell = v => /[",\n]/.test(v = String(v ?? '')) ? `"${v.replace(/"/g, '""')}"` : v;
+    const lines = all().map(c => [c.no, c.name, c.sticker, c.paste, c.roll, c.qty, c.mold, c.moldL, c.moldM, c.moldS, c.note, c.posRaw, c.local ? '本機新增' : 'Excel'].map(cell).join(','));
+    download(`客戶貼紙-${today()}.csv`, '﻿' + [head.join(','), ...lines].join('\r\n'), 'text/csv;charset=utf-8');
+  });
+  $('#exportJson').addEventListener('click', () => {
+    if (!added.length) return toast('目前沒有本機新增的客戶');
+    download(`客戶貼紙-新增備份-${today()}.json`, JSON.stringify({ app: 'sticker-lookup', version: 1, customers: added }), 'application/json');
+  });
+  $('#importJson').addEventListener('click', () => $('#importFile').click());
+  $('#importFile').addEventListener('change', async e => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    try {
+      const data = JSON.parse(await f.text());
+      const list = (Array.isArray(data) ? data : data.customers || []).filter(c => c && typeof c.name === 'string' && c.name.trim());
+      if (!list.length) return toast('備份檔中沒有可匯入的客戶');
+      const ids = new Set(added.map(c => c.id)); let n = 0;
+      const prev = added.slice();
+      for (const c of list){
+        const rec = { ...c, local: true, id: typeof c.id === 'string' ? c.id : 'n' + Date.now().toString(36) + n,
+          styles: (Array.isArray(c.styles) ? c.styles : []).filter(s => s && typeof s.img === 'string' && s.img.startsWith('data:image/')),
+          place: [] };
+        if (ids.has(rec.id)) continue;
+        added.push(rec); ids.add(rec.id); n++;
+      }
+      if (!saveAdded()){ added = prev; return; }
+      render(); toast(n ? `已匯入 ${n} 筆客戶` : '備份中的客戶都已存在，未重複匯入');
+    } catch { toast('無法讀取備份檔，請確認是本頁匯出的 JSON'); }
+  });
+
+  // ---- 啟動 ----
+  added = loadAdded();
+  const qs = new URLSearchParams(location.search).get('q');
+  if (qs) $('#q').value = qs;
+  fetch('data.json').then(r => { if (!r.ok) throw 0; return r.json(); })
+    .then(d => { base = d.customers; render(); })
+    .catch(() => { render(); toast('無法載入 Excel 資料，目前只顯示本機新增的客戶'); });
+})();
+</script>
+</body>
+</html>
