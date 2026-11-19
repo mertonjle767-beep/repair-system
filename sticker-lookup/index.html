@@ -7,7 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-title" content="貼紙查詢">
-<meta name="description" content="依客戶名稱查詢貼紙樣式、張貼位置、數量、字模與滾字位置，並可新增客戶。">
+<meta name="description" content="依客戶名稱查詢貼紙樣式、張貼位置、字模與滾字位置，並可新增客戶。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <script src="../vendor/supabase-2.99.1.js"></script>
@@ -151,7 +151,7 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
 <div class="sticky">
 <header class="top">
   <div class="wrap">
-    <div class="brand"><span class="bell" aria-hidden="true"></span><div><h1>客戶貼紙查詢</h1><span>貼紙樣式・張貼位置・數量・字模・滾字位置</span></div></div>
+    <div class="brand"><span class="bell" aria-hidden="true"></span><div><h1>客戶貼紙查詢</h1><span>貼紙樣式・張貼位置・字模・滾字位置</span></div></div>
     <div class="q">
       <input id="q" type="search" placeholder="輸入客戶名稱，例如：永清" autocomplete="off" aria-label="客戶名稱">
       <button class="btn primary" id="addBtn" type="button">＋ 新增客戶</button>
@@ -190,13 +190,9 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
         <input id="iName" name="name" required maxlength="40">
         <small id="nameMsg"></small>
       </div>
-      <div class="f">
+      <div class="f full">
         <label for="iSticker">貼紙公司名</label>
         <input id="iSticker" name="sticker" maxlength="60" placeholder="貼紙上印的公司名">
-      </div>
-      <div class="f">
-        <label for="iQty">數量</label>
-        <input id="iQty" name="qty" maxlength="20" inputmode="numeric" placeholder="例如：1">
       </div>
       <div class="f">
         <label for="iPaste">張貼位置</label>
@@ -249,7 +245,7 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
 (() => {
   const LEGACY_KEY = 'sticker-lookup.added.v1';   // 改用資料庫前存在瀏覽器的新增客戶
   const TABLE = 'sticker_customers';
-  const FIELDS = ['name','sticker','paste','roll','qty','mold','moldL','moldM','moldS','note'];
+  const FIELDS = ['name','sticker','paste','roll','mold','moldL','moldM','moldS','note'];
   const COL = { moldL: 'mold_l', moldM: 'mold_m', moldS: 'mold_s' };
   const MAX_IMGS = 5;
   const $ = s => document.querySelector(s);
@@ -287,7 +283,7 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
   }
   const fromRow = r => ({
     id: 'db-' + r.id, dbId: r.id, db: true, created: r.created_at, edited: r.updated_at || '', no: '',
-    name: r.name, sticker: r.sticker, paste: r.paste, roll: r.roll, qty: r.qty, mold: r.mold,
+    name: r.name, sticker: r.sticker, paste: r.paste, roll: r.roll, mold: r.mold,
     moldL: r.mold_l, moldM: r.mold_m, moldS: r.mold_s, note: r.note, posRaw: '', place: [],
     styles: (Array.isArray(r.images) ? r.images : []).filter(safeImg).map(img => ({ img, label: r.sticker })),
   });
@@ -377,7 +373,6 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
         <dl class="facts">
           <dt>張貼位置</dt><dd class="key">${val(c.paste)}</dd>
           <dt>滾字位置</dt><dd class="key">${val(c.roll)}</dd>
-          <dt>數量</dt><dd>${val(c.qty)}</dd>
           <dt>字模</dt><dd>${val(c.mold)}</dd>
           <dt>字模尺寸</dt><dd>${molds ? `<div class="molds">${molds}</div>` : '<span class="empty">—</span>'}</dd>
           ${c.note ? `<dt>備註</dt><dd>${esc(c.note)}</dd>` : ''}
@@ -533,9 +528,9 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
 
   // ---- 匯出 ----
   $('#exportCsv').addEventListener('click', () => {
-    const head = ['編號','客戶名稱','貼紙公司名','張貼位置','滾字位置','數量','字模','廠商字模(大)','年字模(中)','月字模(小)','備註','原始位置記錄','來源','新增時間','修改時間'];
+    const head = ['編號','客戶名稱','貼紙公司名','張貼位置','滾字位置','字模','廠商字模(大)','年字模(中)','月字模(小)','備註','原始位置記錄','來源','新增時間','修改時間'];
     const cell = v => /[",\n]/.test(v = String(v ?? '')) ? `"${v.replace(/"/g, '""')}"` : v;
-    const lines = all().map(c => [c.no, c.name, c.sticker, c.paste, c.roll, c.qty, c.mold, c.moldL, c.moldM, c.moldS, c.note, c.posRaw,
+    const lines = all().map(c => [c.no, c.name, c.sticker, c.paste, c.roll, c.mold, c.moldL, c.moldM, c.moldS, c.note, c.posRaw,
       c.db ? '共用新增' : c.local ? '本機未上傳' : c.edited ? 'Excel（已修改）' : 'Excel', c.created ? new Date(c.created).toLocaleString('zh-TW') : '', c.edited ? new Date(c.edited).toLocaleString('zh-TW') : ''].map(cell).join(','));
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob(['﻿' + [head.join(','), ...lines].join('\r\n')], { type: 'text/csv;charset=utf-8' }));
