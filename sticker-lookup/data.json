@@ -30,7 +30,7 @@
    "sticker": "政航",
    "paste": "頭邊",
    "roll": "中間",
-   "posRaw": "滾中間-貼頭邊",
+   "posRaw": "",
    "mold": "政航",
    "qty": "3",
    "moldL": "政航",
@@ -39,7 +39,7 @@
    "note": "",
    "styles": [
     {
-     "img": "img/026.jpg",
+     "img": "img/120.jpg",
      "label": "政航"
     }
    ],
@@ -91,7 +91,7 @@
    "sticker": "大豐耀",
    "paste": "頭邊",
    "roll": "中間",
-   "posRaw": "滾中間-貼頭邊",
+   "posRaw": "",
    "mold": "大豐燿",
    "qty": "2",
    "moldL": "大豐燿",
@@ -100,7 +100,7 @@
    "note": "105/10 改貼中間",
    "styles": [
     {
-     "img": "img/046.jpg",
+     "img": "img/121.jpg",
      "label": "大豐耀"
     }
    ],
@@ -376,7 +376,7 @@
    "sticker": "鴻麒",
    "paste": "頭邊",
    "roll": "中間",
-   "posRaw": "滾中間-貼頭邊",
+   "posRaw": "",
    "mold": "鴻麒",
    "qty": "1",
    "moldL": "鴻麒",
@@ -385,7 +385,7 @@
    "note": "",
    "styles": [
     {
-     "img": "img/024.jpg",
+     "img": "img/114.jpg",
      "label": "鴻麒"
     }
    ],
@@ -573,7 +573,7 @@
    "sticker": "永清",
    "paste": "頭邊",
    "roll": "中間",
-   "posRaw": "滾中間-貼頭邊",
+   "posRaw": "",
    "mold": "永清",
    "qty": "1",
    "moldL": "永清",
@@ -590,7 +590,7 @@
      "label": "永清"
     },
     {
-     "img": "img/043.jpg",
+     "img": "img/115.jpg",
      "label": "永清"
     }
    ],
@@ -603,7 +603,7 @@
    "sticker": "富興",
    "paste": "頭邊",
    "roll": "中間",
-   "posRaw": "滾中間-貼頭邊",
+   "posRaw": "",
    "mold": "富興",
    "qty": "1",
    "moldL": "富興",
@@ -612,12 +612,12 @@
    "note": "2021/10/21新增黃底白字款",
    "styles": [
     {
-     "img": "img/022.jpg",
-     "label": "富興"
-    },
-    {
      "img": "img/085.jpg",
      "label": "富興（2021/10/21新增黃底白字款）"
+    },
+    {
+     "img": "img/116.jpg",
+     "label": "富興"
     }
    ],
    "place": []
@@ -629,7 +629,7 @@
    "sticker": "茂順",
    "paste": "頭邊",
    "roll": "中間",
-   "posRaw": "滾中間-貼頭邊",
+   "posRaw": "",
    "mold": "茂順",
    "qty": "1",
    "moldL": "茂順",
@@ -638,7 +638,7 @@
    "note": "",
    "styles": [
     {
-     "img": "img/041.jpg",
+     "img": "img/117.jpg",
      "label": "茂順"
     }
    ],
@@ -690,7 +690,7 @@
    "sticker": "崑KS嵩",
    "paste": "頭邊",
    "roll": "中間",
-   "posRaw": "滾中間-貼頭邊",
+   "posRaw": "",
    "mold": "崑嵩",
    "qty": "1",
    "moldL": "崑嵩",
@@ -699,7 +699,7 @@
    "note": "",
    "styles": [
     {
-     "img": "img/023.jpg",
+     "img": "img/118.jpg",
      "label": "崑KS嵩"
     }
    ],
@@ -751,7 +751,7 @@
    "sticker": "尊奉",
    "paste": "字旁邊",
    "roll": "中間",
-   "posRaw": "滾中間-貼字旁邊",
+   "posRaw": "",
    "mold": "瑋權",
    "qty": "1",
    "moldL": "瑋權",
@@ -759,10 +759,6 @@
    "moldS": "V",
    "note": "2022改貼中間；2022/2/9新版",
    "styles": [
-    {
-     "img": "img/028.jpg",
-     "label": "尊奉"
-    },
     {
      "img": "img/086.jpg",
      "label": "尊奉+電話（2022/2/9新版）"
@@ -777,7 +773,7 @@
    "sticker": "佑昇",
    "paste": "頭邊",
    "roll": "中間",
-   "posRaw": "滾中間-貼頭邊",
+   "posRaw": "",
    "mold": "佑昇",
    "qty": "1",
    "moldL": "佑昇",
@@ -786,7 +782,7 @@
    "note": "",
    "styles": [
     {
-     "img": "img/029.jpg",
+     "img": "img/119.jpg",
      "label": "佑昇"
     }
    ],
@@ -1355,19 +1351,14 @@
    "sticker": "1404 J-01單",
    "paste": "寄給客戶貼",
    "roll": "",
-   "posRaw": "寄給客戶貼",
+   "posRaw": "",
    "mold": "",
    "qty": "",
    "moldL": "",
    "moldM": "",
    "moldS": "",
    "note": "",
-   "styles": [
-    {
-     "img": "img/021.jpg",
-     "label": "1404 J-01單"
-    }
-   ],
+   "styles": [],
    "place": []
   },
   {
@@ -1525,7 +1516,7 @@
    "note": "",
    "styles": [
     {
-     "img": "img/020.jpg",
+     "img": "img/122.jpg",
      "label": ""
     }
    ],
@@ -1538,7 +1529,7 @@
    "sticker": "",
    "paste": "頭邊",
    "roll": "",
-   "posRaw": "貼頭邊",
+   "posRaw": "",
    "mold": "",
    "qty": "",
    "moldL": "",
@@ -1547,7 +1538,7 @@
    "note": "",
    "styles": [
     {
-     "img": "img/025.jpg",
+     "img": "img/123.jpg",
      "label": ""
     }
    ],
@@ -1569,7 +1560,7 @@
    "note": "",
    "styles": [
     {
-     "img": "img/027.jpg",
+     "img": "img/124.jpg",
      "label": ""
     }
    ],
@@ -1648,7 +1639,7 @@
    "sticker": "品鏵",
    "paste": "頭邊",
    "roll": "",
-   "posRaw": "貼頭邊",
+   "posRaw": "",
    "mold": "",
    "qty": "",
    "moldL": "",
@@ -1657,7 +1648,7 @@
    "note": "",
    "styles": [
     {
-     "img": "img/039.jpg",
+     "img": "img/125.jpg",
      "label": "品鏵"
     }
    ],
@@ -1679,7 +1670,7 @@
    "note": "直接出貨",
    "styles": [
     {
-     "img": "img/042.jpg",
+     "img": "img/126.jpg",
      "label": "元桀"
     }
    ],
@@ -1881,7 +1872,7 @@
    "note": "",
    "styles": [
     {
-     "img": "img/058.jpg",
+     "img": "img/127.jpg",
      "label": "杉禾"
     }
    ],
@@ -1991,7 +1982,7 @@
    "note": "",
    "styles": [
     {
-     "img": "img/061.jpg",
+     "img": "img/112.jpg",
      "label": "麒翔"
     }
    ],
@@ -2048,7 +2039,7 @@
    "sticker": "炳澤",
    "paste": "中間",
    "roll": "中間",
-   "posRaw": "滾中間、貼中間",
+   "posRaw": "",
    "mold": "X",
    "qty": "",
    "moldL": "",
@@ -2057,7 +2048,7 @@
    "note": "",
    "styles": [
     {
-     "img": "img/065.jpg",
+     "img": "img/113.jpg",
      "label": "炳澤"
     }
    ],
