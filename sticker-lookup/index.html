@@ -264,7 +264,8 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
     return { ...c, ...o, id: c.id, db: false, no: c.no, place: c.place, posRaw: '',
       styles: o.styles.map(s => ({ img: s.img, label: labels.get(s.img) || s.label })) };
   }
-  const all = () => [...legacy, ...shared, ...base.map(applyOverride)];
+  // 被刪除（隱藏）的 Excel 客戶不顯示
+  const all = () => [...legacy, ...shared, ...base.filter(c => !overrides.get(c.id)?.hidden).map(applyOverride)];
 
   function toast(msg){
     const t = $('#toast'); t.textContent = msg; t.hidden = false;
@@ -282,7 +283,7 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
     });
   }
   const fromRow = r => ({
-    id: 'db-' + r.id, dbId: r.id, db: true, created: r.created_at, edited: r.updated_at || '', no: '',
+    id: 'db-' + r.id, dbId: r.id, db: true, hidden: r.hidden === true, created: r.created_at, edited: r.updated_at || '', no: '',
     name: r.name, sticker: r.sticker, paste: r.paste, roll: r.roll, mold: r.mold,
     moldL: r.mold_l, moldM: r.mold_m, moldS: r.mold_s, note: r.note, posRaw: '', place: [],
     styles: (Array.isArray(r.images) ? r.images : []).filter(safeImg).map(img => ({ img, label: r.sticker })),
@@ -366,7 +367,7 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
         ${c.edited ? `<span class="chip shared">已修改 ${esc(day(c.edited))}</span>` : ''}
         ${c.local ? '<span class="chip local">僅本機・未上傳</span>' : ''}
         ${c.local ? `<span class="acts">${client && !dbError ? `<button class="btn sm" type="button" data-upload="${esc(c.id)}">上傳</button>` : ''}<button class="btn sm danger" type="button" data-del="${esc(c.id)}">刪除</button></span>`
-          : client && !dbError ? `<span class="acts"><button class="btn sm" type="button" data-edit="${esc(c.id)}">編輯</button></span>` : ''}
+          : client && !dbError ? `<span class="acts"><button class="btn sm" type="button" data-edit="${esc(c.id)}">編輯</button><button class="btn sm danger" type="button" data-remove="${esc(c.id)}">刪除</button></span>` : ''}
       </div>
       <div class="body">
         <div class="styles">${styles}</div>
@@ -500,6 +501,24 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
     } finally { busy(false); }
   });
 
+  // 清單上的刪除：網頁新增的客戶直接刪除；Excel 原有客戶在資料庫標記為已刪除（隱藏）
+  async function removeCustomer(id, btn){
+    const c = all().find(x => x.id === id);
+    if (!c || !client || dbError) return;
+    if (!confirm(`確定要刪除「${c.name}」？刪除後所有人都看不到這筆資料。`)) return;
+    btn.disabled = true;
+    try {
+      const { error } = c.db
+        ? await client.rpc('sticker_delete', { p_id: c.dbId })
+        : await client.rpc('sticker_hide', { p_base_id: c.id, p_name: c.name });
+      if (error) throw error;
+      await loadShared(); render(); toast(`已刪除「${c.name}」`);
+    } catch (err) {
+      btn.disabled = false;
+      toast(`刪除未完成（${err.message || '連線異常'}），請重新整理確認。`);
+    }
+  }
+
   async function uploadLegacy(items){
     let ok = 0;
     for (const c of items){
@@ -515,6 +534,7 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
     const b = e.target.closest('#list button, #banner button'); if (!b) return;
     if (b.dataset.addName != null) return openForm(b.dataset.addName);
     if (b.dataset.edit) return startEdit(b.dataset.edit);
+    if (b.dataset.remove) return removeCustomer(b.dataset.remove, b);
     if (b.hasAttribute('data-retry')){ b.disabled = true; return refresh(); }
     if (b.hasAttribute('data-upload-all')){ b.disabled = true; return uploadLegacy(legacy.slice()); }
     if (b.dataset.upload){ b.disabled = true; return uploadLegacy(legacy.filter(c => c.id === b.dataset.upload)); }

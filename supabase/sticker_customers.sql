@@ -26,6 +26,7 @@ create table if not exists public.sticker_customers (
 );
 alter table public.sticker_customers add column if not exists base_id text;      -- 對應 Excel 資料編號
 alter table public.sticker_customers add column if not exists updated_at timestamptz;
+alter table public.sticker_customers add column if not exists hidden boolean not null default false; -- Excel 客戶被刪除（隱藏）
 create unique index if not exists sticker_customers_base_id_key on public.sticker_customers (base_id);
 create index if not exists sticker_customers_created_at_idx on public.sticker_customers (created_at desc);
 
@@ -96,7 +97,7 @@ begin
             qty = coalesce(p_data->>'qty', ''), mold = coalesce(p_data->>'mold', ''),
             mold_l = coalesce(p_data->>'mold_l', ''), mold_m = coalesce(p_data->>'mold_m', ''),
             mold_s = coalesce(p_data->>'mold_s', ''), note = coalesce(p_data->>'note', ''),
-            images = coalesce(p_data->'images', '[]'::jsonb), updated_at = now()
+            images = coalesce(p_data->'images', '[]'::jsonb), updated_at = now(), hidden = false
         where id = p_id
         returning id into v_id;
         if v_id is null then raise exception '找不到要修改的資料，可能已被刪除'; end if;
@@ -111,7 +112,7 @@ begin
         on conflict (base_id) do update set
             name = excluded.name, sticker = excluded.sticker, paste = excluded.paste, roll = excluded.roll,
             qty = excluded.qty, mold = excluded.mold, mold_l = excluded.mold_l, mold_m = excluded.mold_m,
-            mold_s = excluded.mold_s, note = excluded.note, images = excluded.images, updated_at = now()
+            mold_s = excluded.mold_s, note = excluded.note, images = excluded.images, updated_at = now(), hidden = false
         returning id into v_id;
     else
         raise exception '缺少要修改的資料編號';
@@ -126,7 +127,19 @@ begin
     delete from public.sticker_customers where id = p_id;
 end $$;
 
+-- 刪除 Excel 原有客戶：data.json 無法從網頁刪除，改為在資料庫標記隱藏。
+-- 要救回時，在 Supabase 把該筆（base_id）資料列刪除，就會恢復成 Excel 原始資料。
+create or replace function public.sticker_hide(p_base_id text, p_name text)
+returns void language plpgsql security definer set search_path = '' as $$
+begin
+    insert into public.sticker_customers (base_id, name, hidden, updated_at)
+    values (p_base_id, left(coalesce(nullif(trim(p_name), ''), p_base_id), 40), true, now())
+    on conflict (base_id) do update set hidden = true, updated_at = now();
+end $$;
+
 revoke all on function public.sticker_save(uuid, text, jsonb) from public;
+revoke all on function public.sticker_hide(text, text) from public;
+grant execute on function public.sticker_hide(text, text) to anon;
 revoke all on function public.sticker_delete(uuid) from public;
 grant execute on function public.sticker_save(uuid, text, jsonb) to anon;
 grant execute on function public.sticker_delete(uuid) to anon;
