@@ -360,7 +360,6 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
       ? `<div class="place"><div>貼法參考照片</div>${c.place.map(p => `<figure><a href="${esc(p.img)}" target="_blank" rel="noopener"><img src="${esc(p.img)}" alt="${esc(p.label)}" loading="lazy"></a><figcaption>${esc(p.label)}</figcaption></figure>`).join('')}</div>` : '';
     return `<article class="card${c.local ? ' local' : ''}">
       <div class="head">
-        ${c.no != null && c.no !== '' ? `<span class="no">#${esc(c.no)}</span>` : ''}
         <h2>${esc(c.name)}</h2>
         ${c.sticker && c.sticker !== c.name ? `<span class="chip">貼紙：${esc(c.sticker)}</span>` : ''}
         ${c.db ? `<span class="chip shared">共用新增 ${esc(day(c.created))}</span>` : ''}
